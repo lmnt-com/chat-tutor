@@ -1,4 +1,4 @@
-import { StreamFrame, TextFrame, AudioFrame, StatusFrame, DurationFrame, FrameHandler } from './types'
+import { StreamFrame, TextFrame, AudioFrame, StatusFrame, FrameHandler } from './types'
 
 // Declare WebKit AudioContext interface
 declare global {
@@ -15,24 +15,13 @@ export class ClientFrameHandler implements FrameHandler {
   private isAudioEnabled = true
   private onTextUpdate: (content: string) => void
   private onStatusUpdate: (status: string, message?: string) => void
-  private onDurationUpdate: (durations: Array<{text?: string, start?: number, duration?: number}>) => void
-  private onAudioStateUpdate: (isPlaying: boolean, startTime: number) => void
-
-  // Duration tracking
-  private allDurations: Array<{text?: string, start?: number, duration?: number}> = []
-  private audioStartTime = 0
-  private totalDurationOffset = 0 // Track accumulated time for duration frames, since they reset each frame
 
   constructor(
     onTextUpdate: (content: string) => void,
-    onStatusUpdate: (status: string, message?: string) => void,
-    onDurationUpdate?: (durations: Array<{text?: string, start?: number, duration?: number}>) => void,
-    onAudioStateUpdate?: (isPlaying: boolean, startTime: number) => void
+    onStatusUpdate: (status: string, message?: string) => void
   ) {
     this.onTextUpdate = onTextUpdate
     this.onStatusUpdate = onStatusUpdate
-    this.onDurationUpdate = onDurationUpdate || (() => {})
-    this.onAudioStateUpdate = onAudioStateUpdate || (() => {})
   }
 
   setAudioEnabled(enabled: boolean) {
@@ -58,34 +47,6 @@ export class ClientFrameHandler implements FrameHandler {
     }
   }
 
-  onDurationFrame(frame: DurationFrame): void {
-    // Adjust start times by adding the accumulated offset
-    const adjustedDurations = frame.durations.map(duration => ({
-      ...duration,
-      start: duration.start !== undefined ? duration.start + this.totalDurationOffset : undefined
-    }))
-
-    // Add a space entry at the end of this frame if it has content
-    if (frame.durations.length > 0) {
-      const lastDuration = frame.durations[frame.durations.length - 1]
-      if (lastDuration.start !== undefined && lastDuration.duration !== undefined) {
-        adjustedDurations.push({
-          text: ' ',
-          start: lastDuration.start + lastDuration.duration + this.totalDurationOffset,
-          duration: 0
-        })
-      }
-    }
-
-    // Accumulate all duration data with adjusted timing
-    this.allDurations.push(...adjustedDurations)
-
-    // Update the total offset for the next frame
-    this.totalDurationOffset += frame.durations[frame.durations.length - 1].duration! + frame.durations[frame.durations.length - 1].start!
-
-    // Notify parent component of updated durations
-    this.onDurationUpdate(this.allDurations)
-  }
 
   onStatusFrame(frame: StatusFrame): void {
     this.onStatusUpdate(frame.status, frame.message)
@@ -124,18 +85,14 @@ export class ClientFrameHandler implements FrameHandler {
       source.onended = () => {
         this.isPlayingAudio = false
         this.currentAudioSource = null
-        this.onAudioStateUpdate(false, 0)
         this.playNextInQueue()
       }
 
       source.start()
-      this.audioStartTime = this.audioContext!.currentTime
-      this.onAudioStateUpdate(true, this.audioStartTime)
     } catch (error) {
       console.error("Audio playback error:", error)
       this.isPlayingAudio = false
       this.currentAudioSource = null
-      this.onAudioStateUpdate(false, 0)
       this.playNextInQueue()
     }
   }
@@ -171,9 +128,6 @@ export class ClientFrameHandler implements FrameHandler {
         case 'audio':
           this.onAudioFrame(frame as AudioFrame)
           break
-        case 'duration':
-          this.onDurationFrame(frame as DurationFrame)
-          break
         case 'status':
           this.onStatusFrame(frame as StatusFrame)
           break
@@ -188,23 +142,11 @@ export class ClientFrameHandler implements FrameHandler {
     }
   }
 
-  // Get current durations for highlighting
-  getDurations(): Array<{text?: string, start?: number, duration?: number}> {
-    return this.allDurations
-  }
-
-  private resetDurations(): void {
-    this.totalDurationOffset = 0
-    this.allDurations = []
-  }
 
   // Stop audio playback and clear queue
   stopAudio(): void {
     this.audioQueue = []
     this.isPlayingAudio = false
-    this.onAudioStateUpdate(false, 0)
-    this.resetDurations()
-    this.onDurationUpdate([])
     if (this.currentAudioSource) {
       this.currentAudioSource.stop()
       this.currentAudioSource.disconnect()

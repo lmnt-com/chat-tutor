@@ -32,14 +32,6 @@ export interface AudioFrame extends BaseFrame {
   duration?: number
 }
 
-export interface DurationFrame extends BaseFrame {
-  type: 'duration'
-  durations: Array<{
-    text?: string
-    start?: number
-    duration?: number
-  }>
-}
 
 export interface StatusFrame extends BaseFrame {
   type: 'status'
@@ -47,7 +39,7 @@ export interface StatusFrame extends BaseFrame {
   message?: string
 }
 
-export type StreamFrame = TextFrame | AudioFrame | DurationFrame | StatusFrame
+export type StreamFrame = TextFrame | AudioFrame | StatusFrame
 
 // Server-side frame builders
 export class FrameBuilder {
@@ -69,13 +61,6 @@ export class FrameBuilder {
     }
   }
 
-  static duration(durations: Array<{text?: string, start?: number, duration?: number}>): DurationFrame {
-    return {
-      type: 'duration',
-      durations,
-      timestamp: Date.now()
-    }
-  }
 
   static status(status: StatusFrame['status'], message?: string): StatusFrame {
     return {
@@ -91,7 +76,6 @@ export class FrameBuilder {
 export interface FrameHandler {
   onTextFrame(frame: TextFrame): void
   onAudioFrame(frame: AudioFrame): void
-  onDurationFrame(frame: DurationFrame): void
   onStatusFrame(frame: StatusFrame): void
   onError(error: Error): void
 }

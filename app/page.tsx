@@ -14,7 +14,6 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar"
 import { ClientFrameHandler } from "@/lib/client-frame-handler"
 import { Message, ChatThread } from "@/lib/types"
-import { HighlightedText } from "@/components/highlighted-text"
 
 const SUGGESTED_TOPICS = [
   "Ancient Rome",
@@ -36,10 +35,6 @@ export default function HistoryTutor() {
   const [hasStarted, setHasStarted] = useState(false)
   const [isUserLoading, setIsUserLoading] = useState(true)
 
-  // Highlighting state
-  const [currentDurations, setCurrentDurations] = useState<Array<{text?: string, start?: number, duration?: number}>>([])
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
-  const [audioStartTime, setAudioStartTime] = useState(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
@@ -164,9 +159,6 @@ export default function HistoryTutor() {
     setInput("")
     setIsLoading(true)
 
-    setCurrentDurations([])
-    setIsAudioPlaying(false)
-    setAudioStartTime(0)
 
     try {
       let userId = user?.id
@@ -211,13 +203,6 @@ export default function HistoryTutor() {
         },
         (status: string, message?: string) => {
           console.log("Status update:", status, message)
-        },
-        (durations: Array<{text?: string, start?: number, duration?: number}>) => {
-          setCurrentDurations(durations)
-        },
-        (isPlaying: boolean, startTime: number) => {
-          setIsAudioPlaying(isPlaying)
-          setAudioStartTime(startTime)
         }
       )
 
@@ -322,17 +307,7 @@ export default function HistoryTutor() {
                       className={cn("max-w-[80%] p-2", message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-50")}
                     >
                       <CardContent className="px-2">
-                        {message.role === "assistant" && message.id === messages[messages.length - 1]?.id ? (
-                          <HighlightedText
-                            text={message.content}
-                            durations={currentDurations}
-                            audioStartTime={audioStartTime}
-                            isPlaying={isAudioPlaying}
-                            className="text-sm leading-relaxed"
-                          />
-                        ) : (
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                        )}
+                        <p className="text-sm leading-relaxed">{message.content}</p>
                       </CardContent>
                     </Card>
                   </div>

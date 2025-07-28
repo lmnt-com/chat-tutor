@@ -36,7 +36,17 @@ In this mode:
 - ❌ Chat history is not saved
 - ❌ Thread management is disabled
 
-Simply add your [LMNT API key](https://app.lmnt.com/account) and [OpenAI API key](https://platform.openai.com/account/api-keys) to the `.env.local` file and run:
+1. Add your [LMNT API key](https://app.lmnt.com/account) and [OpenAI API key](https://platform.openai.com/account/api-keys) to a file named `.env.local` in the root of the project.
+
+```bash
+touch .env.local
+```
+```env
+LMNT_API_KEY=your_lmnt_api_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+2. Run:
 ```bash
 npm run dev
 ```
@@ -48,7 +58,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app in action.
 To enable authentication and chat history persistence, you'll need to set up a database:
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Add your Supabase credentials to the `.env.local` file:
+2. Add your Supabase credentials to a file named `.env.local` in the root of the project:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -84,12 +94,12 @@ npm run dev
 
 ## Architecture
 
-- **Speech**: [LMNT](https://lmnt.com) for real-time text-to-speech synthesis
+- **Speech**: [LMNT](https://lmnt.com) for real-time text-to-speech
 - **Frontend**: Next.js 15 with React 19, TypeScript, and Tailwind CSS
-- **AI**: OpenAI GPT-4 for conversation generation
+- **LLM**: OpenAI GPT-4o for conversation generation
 - **Database**: Supabase (PostgreSQL) for user data and chat history
 - **Authentication**: Supabase Auth
-- **UI Components**: Radix UI primitives with custom styling
+- **UI Components**: Shadcn UI
 
 ## Development
 
@@ -114,13 +124,11 @@ npm run lint
 
 To learn more about the technologies used:
 
-- [LMNT API](https://docs.lmnt.com/) - learn about LMNT's text-to-speech API.
+- [LMNT API](https://docs.lmnt.com/) - learn about LMNT's text-to-speech and voice-cloning API.
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [OpenAI API](https://platform.openai.com/docs) - learn about OpenAI's chat completions API.
 - [Supabase Documentation](https://supabase.com/docs) - learn about Supabase features.
 
 ## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The easiest way to deploy your Next.js app is to use [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).

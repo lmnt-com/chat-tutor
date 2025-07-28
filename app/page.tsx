@@ -38,6 +38,7 @@ export default function HistoryTutor() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -87,6 +88,28 @@ export default function HistoryTutor() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  useEffect(() => {
+    const focusInput = () => {
+      if (!isLoading && !isUserLoading) {
+        inputRef.current?.focus()
+      }
+    }
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ensures we don't focus the input if the user is already typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      
+      focusInput()
+    }
+
+    // Focus input on mount and loading state changes
+    focusInput()
+
+    // Focus input on any key press
+    document.addEventListener('keydown', handleKeyPress)
+    return () => document.removeEventListener('keydown', handleKeyPress)
+  }, [isLoading, isUserLoading])
 
   /**
    * Delete a chat thread from the local state. DB deletion handled by server API.
@@ -356,6 +379,7 @@ export default function HistoryTutor() {
           <div className="border-t p-6">
             <form onSubmit={handleSubmit} className="flex space-x-2">
               <Input
+                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything about history..."

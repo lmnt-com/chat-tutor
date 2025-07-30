@@ -150,7 +150,7 @@ export default function HistoryTutor() {
       id: Date.now().toString(),
       role: "assistant",
       content:
-        "Hi there! Welcome to your personal history tutor. I'm here to help you explore the fascinating world of history in a warm, encouraging way. Here are some topics we can dive into today, or feel free to ask about anything that sparks your curiosity!",
+        "Hi there! Welcome to your personal history tutor. I'm here to help you explore the fascinating world of history. Here are some topics we can dive into today, or feel free to ask about anything that sparks your curiosity!",
       timestamp: new Date(),
     }
     setMessages([welcomeMessage])
@@ -304,7 +304,7 @@ export default function HistoryTutor() {
                   Time Travel Academy
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Your Personal History Tutor
+                  A personal history tutor for fifth graders
                 </p>
               </div>
             </div>

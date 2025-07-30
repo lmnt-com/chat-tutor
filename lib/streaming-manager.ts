@@ -40,7 +40,7 @@ export class StreamingManager {
       this.sendFrame(FrameBuilder.status('started', 'Generating response'))
 
       const openaiStream = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-nano",
         messages: [{ role: "system", content: systemPrompt }, ...messages],
         stream: true,
         temperature: 0.7,

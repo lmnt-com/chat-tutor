@@ -1,10 +1,10 @@
 import Lmnt from 'lmnt-node'
 import OpenAI from 'openai'
 import { Stream } from 'openai/core/streaming.mjs'
-import { FrameBuilder, Message, StreamFrame } from './types'
+import { FrameBuilder, Message, StreamFrame } from '../types'
 import { Thread } from './thread'
-import { SentenceBuffer } from './sentence-buffer'
-import { PromiseQueue } from './promise-queue'
+import { SentenceBuffer } from '../sentence-buffer'
+import { PromiseQueue } from '../promise-queue'
 
 export class StreamingManager {
   private controller: ReadableStreamDefaultController<Uint8Array>

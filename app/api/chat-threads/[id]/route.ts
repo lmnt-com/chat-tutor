@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Thread } from "@/lib/thread"
+import { Thread } from "@/lib/server/thread"
 
 export async function DELETE(
   req: NextRequest,

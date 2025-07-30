@@ -1,6 +1,6 @@
-import { createServerClient, isSupabaseAvailable } from "./supabase"
+import { createServerClient, isSupabaseAvailable } from "../supabase"
 import { SupabaseClient } from "@supabase/supabase-js"
-import { Message } from "./types"
+import { Message } from "../types"
 
 const THREAD_TITLE_MAX_LENGTH = 50
 

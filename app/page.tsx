@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,15 +14,9 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar"
 import { ClientFrameHandler } from "@/lib/client-frame-handler"
 import { Message, ChatThread } from "@/lib/types"
-
-const SUGGESTED_TOPICS = [
-  "Ancient Rome",
-  "World War II",
-  "Renaissance Art",
-  "American Revolution",
-  "Medieval Europe",
-  "Ancient Egypt",
-]
+import { CharacterSelectionModal } from "@/components/character-selection-modal"
+import { SettingsDialog } from "@/components/settings-dialog"
+import { CharacterId, getCharacter } from "@/lib/characters"
 
 export default function HistoryTutor() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -34,12 +28,23 @@ export default function HistoryTutor() {
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
   const [isUserLoading, setIsUserLoading] = useState(true)
-
+  const [characterId, setCharacterId] = useState<CharacterId | null>(null)
+  const [showCharacterSelection, setShowCharacterSelection] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    const savedCharacter = localStorage.getItem('historyTutorCharacter')
+    if (savedCharacter && Object.values(CharacterId).includes(savedCharacter as CharacterId)) {
+      setCharacterId(savedCharacter as CharacterId)
+    } else {
+      setShowCharacterSelection(true)
+    }
+  }, [])
 
   useEffect(() => {
     const loadChatThreads = async () => {
@@ -79,11 +84,26 @@ export default function HistoryTutor() {
     }
 
     checkUser()
-    if (!hasStarted) {
+  }, [hasStarted, supabase, characterId])
+
+  const startConversation = useCallback(() => {
+    if (!characterId) return
+    const characterObj = getCharacter(characterId)
+    const welcomeMessage: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: characterObj.firstMessage,
+      timestamp: new Date(),
+    }
+    setMessages([welcomeMessage])
+  }, [characterId])
+
+  useEffect(() => {
+    if (!hasStarted && characterId) {
       startConversation()
       setHasStarted(true)
     }
-  }, [hasStarted, supabase])
+  }, [hasStarted, characterId, startConversation])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -91,7 +111,7 @@ export default function HistoryTutor() {
 
   useEffect(() => {
     const focusInput = () => {
-      if (!isLoading && !isUserLoading) {
+      if (!isLoading && !isUserLoading && characterId) {
         inputRef.current?.focus()
       }
     }
@@ -109,7 +129,17 @@ export default function HistoryTutor() {
     // Focus input on any key press
     document.addEventListener('keydown', handleKeyPress)
     return () => document.removeEventListener('keydown', handleKeyPress)
-  }, [isLoading, isUserLoading])
+  }, [isLoading, isUserLoading, characterId])
+
+  const handleCharacterSelect = (selectedCharacter: CharacterId) => {
+    setCharacterId(selectedCharacter)
+    localStorage.setItem('historyTutorCharacter', selectedCharacter)
+    setShowCharacterSelection(false)
+  }
+
+  const handleCharacterSettingsClick = () => {
+    setShowSettings(true)
+  }
 
   /**
    * Delete a chat thread from the local state. DB deletion handled by server API.
@@ -145,17 +175,6 @@ export default function HistoryTutor() {
     }
   }
 
-  const startConversation = () => {
-    const welcomeMessage: Message = {
-      id: Date.now().toString(),
-      role: "assistant",
-      content:
-        "Hi there! Welcome to your personal history tutor. I'm here to help you explore the fascinating world of history. Here are some topics we can dive into today, or feel free to ask about anything that sparks your curiosity!",
-      timestamp: new Date(),
-    }
-    setMessages([welcomeMessage])
-  }
-
   const handleTopicSelect = (topic: string) => {
     const message = `Tell me about ${topic}`
     setInput(message)
@@ -165,7 +184,7 @@ export default function HistoryTutor() {
   const handleSubmit = async (e?: React.FormEvent, customMessage?: string) => {
     e?.preventDefault()
     const messageText = customMessage || input
-    if (!messageText.trim() || isLoading || isUserLoading) return
+    if (!messageText.trim() || isLoading || isUserLoading || !characterId) return
 
     if (frameHandlerRef.current) {
       frameHandlerRef.current.stopAudio()
@@ -182,7 +201,6 @@ export default function HistoryTutor() {
     setInput("")
     setIsLoading(true)
 
-
     try {
       let userId = user?.id
 
@@ -191,6 +209,7 @@ export default function HistoryTutor() {
         userId = currentUser?.id
       }
 
+      const characterObj = getCharacter(characterId)
       const response = await fetch("/api/chat-with-speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -198,7 +217,8 @@ export default function HistoryTutor() {
           messages: [...messages, userMessage],
           threadId: currentThreadId,
           userId: userId,
-          voice: "cassian",
+          voice: characterObj.voice,
+          systemPrompt: characterObj.prompt,
         }),
       })
 
@@ -277,6 +297,12 @@ export default function HistoryTutor() {
     }
   }
 
+  // Don't render the main chat interface until age group is selected
+  if (showCharacterSelection) {
+    return <CharacterSelectionModal onSelect={handleCharacterSelect} />
+  }
+
+
   return (
     <SidebarProvider defaultOpen={true} className="h-screen">
       <AppSidebar
@@ -292,6 +318,8 @@ export default function HistoryTutor() {
         }}
         currentThreadId={currentThreadId}
         onThreadDelete={handleThreadDelete}
+        onCharacterSettingsClick={handleCharacterSettingsClick}
+        currentCharacter={characterId}
       />
       <SidebarInset>
         <div className="flex h-full flex-col">
@@ -304,7 +332,7 @@ export default function HistoryTutor() {
                   Time Travel Academy
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  A personal history tutor for fifth graders
+                  Your personal history tutor
                 </p>
               </div>
             </div>
@@ -336,9 +364,9 @@ export default function HistoryTutor() {
                   </div>
                 ))}
 
-                {messages.length === 1 && (
+                {messages.length === 1 && characterId && (
                   <div className="grid grid-cols-2 gap-3 mt-6">
-                    {SUGGESTED_TOPICS.map((topic) => (
+                    {getCharacter(characterId).suggestedTopics.map((topic: string) => (
                       <Button
                         key={topic}
                         variant="outline"
@@ -392,9 +420,24 @@ export default function HistoryTutor() {
             </form>
           </div>
 
-
         </div>
       </SidebarInset>
+      
+      {characterId && (
+        <SettingsDialog
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          currentCharacter={characterId}
+          onCharacterSelect={(newCharacter) => {
+            setCharacterId(newCharacter)
+            localStorage.setItem('historyTutorCharacter', newCharacter)
+            setMessages([])
+            setCurrentThreadId(null)
+            setHasStarted(false)
+            setShowSettings(false)
+          }}
+        />
+      )}
     </SidebarProvider>
   )
 }

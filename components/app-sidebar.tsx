@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MessageSquare, Plus, Settings, User, Trash2 } from "lucide-react"
+import { MessageSquare, Plus, Settings, User, Trash2, Users } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { AuthDialog } from "@/components/auth-dialog"
 import { createClient, isSupabaseAvailable } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
+import { CharacterId, getCharacter } from "@/lib/characters"
 
 interface ChatThread {
   id: string
@@ -34,6 +35,8 @@ interface AppSidebarProps {
   onThreadSelect: (threadId: string) => void
   currentThreadId: string | null
   onThreadDelete?: (threadId: string) => void
+  onCharacterSettingsClick: () => void
+  currentCharacter?: CharacterId | null
 }
 
 export function AppSidebar({
@@ -41,7 +44,9 @@ export function AppSidebar({
   chatThreads,
   onThreadSelect,
   currentThreadId,
-  onThreadDelete
+  onThreadDelete,
+  onCharacterSettingsClick,
+  currentCharacter
 }: AppSidebarProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false)
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null)
@@ -98,16 +103,16 @@ export function AppSidebar({
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
-          {state === "expanded" ? (
-            <Button onClick={startNewChat} className="w-full justify-start bg-transparent" variant="outline">
-              <Plus className="size-4 mr-2" />
-              New Chat
-            </Button>
-          ) : (
-            <SidebarMenuButton onClick={startNewChat} tooltip="New Chat">
-              <Plus className="size-4" />
-            </SidebarMenuButton>
-          )}
+        {state === "expanded" ? (
+          <Button onClick={startNewChat} className="w-full justify-start bg-transparent" variant="outline">
+            <Plus className="size-4 mr-2" />
+            New Chat
+          </Button>
+        ) : (
+          <SidebarMenuButton onClick={startNewChat} tooltip="New Chat">
+            <Plus className="size-4" />
+          </SidebarMenuButton>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -168,12 +173,22 @@ export function AppSidebar({
               </SidebarMenuItem>
             </>
           ) : (
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => setShowAuthDialog(true)}>
-                <User className="size-4" />
-                <span>Sign In</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <>
+              {currentCharacter && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={onCharacterSettingsClick} tooltip="Change Character">
+                    <Users className="size-4" />
+                    <span className="truncate">{getCharacter(currentCharacter).displayName}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setShowAuthDialog(true)}>
+                  <User className="size-4" />
+                  <span>Sign In</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
           )}
         </SidebarMenu>
       </SidebarFooter>

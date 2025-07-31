@@ -39,7 +39,12 @@ export interface StatusFrame extends BaseFrame {
   message?: string
 }
 
-export type StreamFrame = TextFrame | AudioFrame | StatusFrame
+export interface SuggestedResponsesFrame extends BaseFrame {
+  type: 'suggested_responses'
+  suggestions: string[] // Array of 3 suggested responses
+}
+
+export type StreamFrame = TextFrame | AudioFrame | StatusFrame | SuggestedResponsesFrame
 
 // Server-side frame builders
 export class FrameBuilder {
@@ -70,6 +75,14 @@ export class FrameBuilder {
       timestamp: Date.now()
     }
   }
+
+  static suggestedResponses(suggestions: string[]): SuggestedResponsesFrame {
+    return {
+      type: 'suggested_responses',
+      suggestions,
+      timestamp: Date.now()
+    }
+  }
 }
 
 // Client-side frame handlers
@@ -77,5 +90,6 @@ export interface FrameHandler {
   onTextFrame(frame: TextFrame): void
   onAudioFrame(frame: AudioFrame): void
   onStatusFrame(frame: StatusFrame): void
+  onSuggestedResponsesFrame(frame: SuggestedResponsesFrame): void
   onError(error: Error): void
 }

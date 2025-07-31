@@ -17,6 +17,7 @@ import { Message, ChatThread } from "@/lib/types"
 import { CharacterSelectionModal } from "@/components/character-selection-modal"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { CharacterId, getCharacter } from "@/lib/characters"
+import { SuggestedResponseBox } from "@/components/suggested-response-box"
 
 export default function HistoryTutor() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -31,6 +32,8 @@ export default function HistoryTutor() {
   const [characterId, setCharacterId] = useState<CharacterId | null>(null)
   const [showCharacterSelection, setShowCharacterSelection] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([])
+  const [previousSuggestionsLength, setPreviousSuggestionsLength] = useState(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
@@ -109,6 +112,17 @@ export default function HistoryTutor() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Auto-scroll when dynamic suggestions appear
+  useEffect(() => {
+    if (dynamicSuggestions.length > 0 && previousSuggestionsLength === 0) {
+      // New suggestions appeared, scroll to bottom to show them
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 200) // Small delay to allow for animation
+    }
+    setPreviousSuggestionsLength(dynamicSuggestions.length)
+  }, [dynamicSuggestions.length, previousSuggestionsLength])
+
   useEffect(() => {
     const focusInput = () => {
       if (!isLoading && !isUserLoading && characterId) {
@@ -119,7 +133,7 @@ export default function HistoryTutor() {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Ensures we don't focus the input if the user is already typing in an input/textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      
+
       focusInput()
     }
 
@@ -175,8 +189,8 @@ export default function HistoryTutor() {
     }
   }
 
-  const handleTopicSelect = (topic: string) => {
-    const message = `Tell me about ${topic}`
+  const handleTopicSelect = (topic: string, prefix: string = "Tell me about") => {
+    const message = `${prefix} ${topic}`
     setInput(message)
     handleSubmit(undefined, message)
   }
@@ -185,6 +199,8 @@ export default function HistoryTutor() {
     e?.preventDefault()
     const messageText = customMessage || input
     if (!messageText.trim() || isLoading || isUserLoading || !characterId) return
+
+    setDynamicSuggestions([])
 
     if (frameHandlerRef.current) {
       frameHandlerRef.current.stopAudio()
@@ -246,6 +262,9 @@ export default function HistoryTutor() {
         },
         (status: string, message?: string) => {
           console.log("Status update:", status, message)
+        },
+        (suggestions: string[]) => {
+          setDynamicSuggestions(suggestions)
         }
       )
 
@@ -337,7 +356,7 @@ export default function HistoryTutor() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="hidden md:flex" title="Toggle Sidebar (⌘B)"/>
+              <SidebarTrigger className="hidden md:flex" title="Toggle Sidebar (⌘B)" />
               <Button
                 variant="outline"
                 size="icon"
@@ -364,22 +383,6 @@ export default function HistoryTutor() {
                   </div>
                 ))}
 
-                {messages.length === 1 && characterId && (
-                  <div className="grid grid-cols-2 gap-3 mt-6">
-                    {getCharacter(characterId).suggestedTopics.map((topic: string) => (
-                      <Button
-                        key={topic}
-                        variant="outline"
-                        onClick={() => handleTopicSelect(topic)}
-                        className="h-auto p-4 text-left justify-start"
-                        disabled={isLoading}
-                      >
-                        {topic}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -404,7 +407,42 @@ export default function HistoryTutor() {
             </ScrollArea>
           </div>
 
-          <div className="border-t p-6">
+          <div className="p-6">
+            {characterId && (
+              <>
+                {dynamicSuggestions.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in-up">
+                    {dynamicSuggestions.map((suggestion: string, index: number) => (
+                      <div
+                        key={`dynamic-${index}`}
+                        className="animate-fade-in-up-stagger"
+                        style={{
+                          animationDelay: `${index * 150}ms`
+                        }}
+                      >
+                        <SuggestedResponseBox
+                          response={suggestion}
+                          onSelect={() => handleTopicSelect(suggestion, "")}
+                          disabled={isLoading}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {messages.length === 1 && dynamicSuggestions.length === 0 && (
+                  <div className="grid grid-cols-2 gap-3 mb-6 animate-in fade-in-0 duration-300">
+                    {getCharacter(characterId).suggestedTopics.map((topic: string) => (
+                      <SuggestedResponseBox
+                        key={topic}
+                        response={topic}
+                        onSelect={() => handleTopicSelect(topic)}
+                        disabled={isLoading}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
             <form onSubmit={handleSubmit} className="flex space-x-2">
               <Input
                 ref={inputRef}
@@ -422,7 +460,7 @@ export default function HistoryTutor() {
 
         </div>
       </SidebarInset>
-      
+
       {characterId && (
         <SettingsDialog
           open={showSettings}
@@ -432,6 +470,7 @@ export default function HistoryTutor() {
             setCharacterId(newCharacter)
             localStorage.setItem('historyTutorCharacter', newCharacter)
             setMessages([])
+            setDynamicSuggestions([])
             setCurrentThreadId(null)
             setHasStarted(false)
             setShowSettings(false)

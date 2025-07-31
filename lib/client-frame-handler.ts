@@ -1,4 +1,4 @@
-import { StreamFrame, TextFrame, AudioFrame, StatusFrame, FrameHandler } from './types'
+import { StreamFrame, TextFrame, AudioFrame, StatusFrame, SuggestedResponsesFrame, FrameHandler } from './types'
 
 // Declare WebKit AudioContext interface
 declare global {
@@ -15,13 +15,16 @@ export class ClientFrameHandler implements FrameHandler {
   private isAudioEnabled = true
   private onTextUpdate: (content: string) => void
   private onStatusUpdate: (status: string, message?: string) => void
+  private onSuggestedResponsesUpdate?: (suggestions: string[]) => void
 
   constructor(
     onTextUpdate: (content: string) => void,
-    onStatusUpdate: (status: string, message?: string) => void
+    onStatusUpdate: (status: string, message?: string) => void,
+    onSuggestedResponsesUpdate?: (suggestions: string[]) => void
   ) {
     this.onTextUpdate = onTextUpdate
     this.onStatusUpdate = onStatusUpdate
+    this.onSuggestedResponsesUpdate = onSuggestedResponsesUpdate
   }
 
   setAudioEnabled(enabled: boolean) {
@@ -50,6 +53,12 @@ export class ClientFrameHandler implements FrameHandler {
 
   onStatusFrame(frame: StatusFrame): void {
     this.onStatusUpdate(frame.status, frame.message)
+  }
+
+  onSuggestedResponsesFrame(frame: SuggestedResponsesFrame): void {
+    if (this.onSuggestedResponsesUpdate) {
+      this.onSuggestedResponsesUpdate(frame.suggestions)
+    }
   }
 
   onError(error: Error): void {
@@ -130,6 +139,9 @@ export class ClientFrameHandler implements FrameHandler {
           break
         case 'status':
           this.onStatusFrame(frame as StatusFrame)
+          break
+        case 'suggested_responses':
+          this.onSuggestedResponsesFrame(frame as SuggestedResponsesFrame)
           break
         default:
           const exhaustiveCheck: never = frame

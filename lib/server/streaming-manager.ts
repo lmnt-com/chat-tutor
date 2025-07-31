@@ -6,6 +6,8 @@ import { Thread } from './thread'
 import { SentenceBuffer } from '../sentence-buffer'
 import { PromiseQueue } from '../promise-queue'
 
+const SUGGESTIONS_MARKER = "[SUGG]"
+
 export class StreamingManager {
   private controller: ReadableStreamDefaultController<Uint8Array>
   private encoder = new TextEncoder()
@@ -77,6 +79,8 @@ export class StreamingManager {
     audioPromiseQueue: PromiseQueue<string>
   ) {
     let fullResponse = ""
+    let textBuffer = ""
+    let hitSuggestionsMarker = false
     
     const sentenceBuffer = new SentenceBuffer((sentence) => {
       audioPromiseQueue.add(this.generateSpeechForSentence(sentence, voice))
@@ -87,24 +91,58 @@ export class StreamingManager {
       if (content) {
         fullResponse += content
         
-        // Send text frame to client immediately to be displayed
-        this.sendFrame(FrameBuilder.text(content))
-        
-        // SentenceBuffer will send complete sentences to LMNT as they are ready
-        sentenceBuffer.addText(content)
+        if (!hitSuggestionsMarker) {
+          textBuffer += content
+          
+          // Check if the buffer contains the suggestions marker
+          if (textBuffer.includes(SUGGESTIONS_MARKER)) {
+            hitSuggestionsMarker = true
+            const parts = textBuffer.split(SUGGESTIONS_MARKER)
+            const textBeforeMarker = parts[0]
+            if (textBeforeMarker) {
+              sentenceBuffer.addText(textBeforeMarker)
+              this.sendFrame(FrameBuilder.text(textBeforeMarker))
+            }
+            // Will stop sending text frames after this point
+          } else {
+            // Buffer enough chars to catch split markers
+            const maxBufferLength = SUGGESTIONS_MARKER.length
+            if (textBuffer.length > maxBufferLength) {
+              const textToSend = textBuffer.slice(0, -maxBufferLength)
+              sentenceBuffer.addText(textToSend)
+              this.sendFrame(FrameBuilder.text(textToSend))
+              textBuffer = textBuffer.slice(-maxBufferLength)
+            }
+          }
+        }
       }
     }
 
-    // Process any remaining text in the buffer
+    // Send any remaining text in the buffer (the llm may have ended the response without a suggestions marker)
+    if (!hitSuggestionsMarker && textBuffer.length > 0) {
+      sentenceBuffer.addText(textBuffer)
+      this.sendFrame(FrameBuilder.text(textBuffer))
+    }
+
+    // Process any remaining text in the sentence buffer
     sentenceBuffer.flush()
 
     // Signal that no more audio promises will be added
     audioPromiseQueue.markComplete()
 
+    // Extract suggestions and clean response from the full response
+    const { cleanedResponse, suggestedResponses } = this.extractSuggestedResponses(fullResponse)
+    
+    // Send suggested responses if any were found
+    if (suggestedResponses.length > 0) {
+      this.sendFrame(FrameBuilder.suggestedResponses(suggestedResponses))
+    }
+
+    // Save the clean response (without suggestions) to the database
     await this.thread.save(
       this.userId,
       this.messages,
-      fullResponse
+      cleanedResponse
     )
   }
 
@@ -145,6 +183,32 @@ export class StreamingManager {
     )
   }
 
+
+  /**
+   * Extracts suggested responses from the LLM output and returns cleaned response
+   * @param fullResponse - The complete response from the LLM
+   * @returns Object containing cleaned response and extracted suggestions
+   */
+  private extractSuggestedResponses(fullResponse: string): { cleanedResponse: string, suggestedResponses: string[] } {
+    const suggestionsRegex = /\[SUGG\]([\s\S]*?)\[\/SUGG\]/
+    const match = fullResponse.match(suggestionsRegex)
+    
+    if (!match) {
+      return { cleanedResponse: fullResponse, suggestedResponses: [] }
+    }
+    
+    const suggestionsText = match[1].trim()
+    const suggestions = suggestionsText
+      .split('\n')
+      .filter(line => line.trim().match(/^\d+\./))
+      .map(line => line.replace(/^\d+\.\s*/, '').trim())
+      .filter(suggestion => suggestion.length > 0)
+    
+    // Remove the suggestions section from the response
+    const cleanedResponse = fullResponse.replace(suggestionsRegex, '').trim()
+    
+    return { cleanedResponse, suggestedResponses: suggestions }
+  }
 
   /**
    * Sends a frame to the client immediately.

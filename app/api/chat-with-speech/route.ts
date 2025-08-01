@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
 import Lmnt from "lmnt-node"
 import { StreamingManager } from "@/lib/server/streaming-manager"
+import { CharacterId } from "@/lib/characters"
 
 export const runtime = "nodejs"
 
@@ -14,7 +15,7 @@ const lmnt = new Lmnt({ apiKey: process.env.LMNT_API_KEY! })
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, threadId, userId, voice = "leah", systemPrompt = "You are a helpful history tutor." } = await req.json()
+    const { messages, threadId, userId, characterId = CharacterId.Fiona, systemPrompt = "You are a helpful history tutor." } = await req.json()
 
     const readableStream = new ReadableStream({
       async start(controller) {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
             userId, 
             messages
           )
-          await streamingManager.streamWithSpeech(messages, systemPrompt, voice)
+          await streamingManager.streamWithSpeech(messages, systemPrompt, characterId)
           
           // Send completion signal
           controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"))

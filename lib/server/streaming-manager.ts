@@ -5,8 +5,7 @@ import { FrameBuilder, Message, StreamFrame } from '../types'
 import { Thread } from './thread'
 import { SentenceBuffer } from '../sentence-buffer'
 import { PromiseQueue } from '../promise-queue'
-
-const SUGGESTIONS_MARKER = "[SUGG]"
+import { CharacterId, getCharacter } from '../characters'
 
 export class StreamingManager {
   private controller: ReadableStreamDefaultController<Uint8Array>
@@ -36,7 +35,7 @@ export class StreamingManager {
   async streamWithSpeech(
     messages: Message[],
     systemPrompt: string,
-    voice: string
+    characterId: CharacterId
   ) {
     try {
       this.sendFrame(FrameBuilder.status('started', 'Generating response'))
@@ -54,7 +53,7 @@ export class StreamingManager {
 
       // Process text stream and audio concurrently
       await Promise.all([
-        this.processTextStream(openaiStream, voice, audioPromiseQueue),
+        this.processTextStream(openaiStream, characterId, audioPromiseQueue),
         this.processAudioQueue(audioPromiseQueue)
       ])
 
@@ -75,15 +74,14 @@ export class StreamingManager {
    */
   private async processTextStream(
     openaiStream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>, 
-    voice: string,
+    characterId: CharacterId,
     audioPromiseQueue: PromiseQueue<string>
   ) {
     let fullResponse = ""
-    let textBuffer = ""
-    let hitSuggestionsMarker = false
+    const character = getCharacter(characterId)
     
     const sentenceBuffer = new SentenceBuffer((sentence) => {
-      audioPromiseQueue.add(this.generateSpeechForSentence(sentence, voice))
+      audioPromiseQueue.add(this.generateSpeechForSentence(sentence, character.voice))
     })
 
     for await (const chunk of openaiStream) {
@@ -91,58 +89,33 @@ export class StreamingManager {
       if (content) {
         fullResponse += content
         
-        if (!hitSuggestionsMarker) {
-          textBuffer += content
-          
-          // Check if the buffer contains the suggestions marker
-          if (textBuffer.includes(SUGGESTIONS_MARKER)) {
-            hitSuggestionsMarker = true
-            const parts = textBuffer.split(SUGGESTIONS_MARKER)
-            const textBeforeMarker = parts[0]
-            if (textBeforeMarker) {
-              sentenceBuffer.addText(textBeforeMarker)
-              this.sendFrame(FrameBuilder.text(textBeforeMarker))
-            }
-            // Will stop sending text frames after this point
-          } else {
-            // Buffer enough chars to catch split markers
-            const maxBufferLength = SUGGESTIONS_MARKER.length
-            if (textBuffer.length > maxBufferLength) {
-              const textToSend = textBuffer.slice(0, -maxBufferLength)
-              sentenceBuffer.addText(textToSend)
-              this.sendFrame(FrameBuilder.text(textToSend))
-              textBuffer = textBuffer.slice(-maxBufferLength)
-            }
-          }
-        }
+        // Send text frame to client immediately to be displayed
+        this.sendFrame(FrameBuilder.text(content))
+        
+        // SentenceBuffer will send complete sentences to LMNT as they are ready
+        sentenceBuffer.addText(content)
       }
     }
 
-    // Send any remaining text in the buffer (the llm may have ended the response without a suggestions marker)
-    if (!hitSuggestionsMarker && textBuffer.length > 0) {
-      sentenceBuffer.addText(textBuffer)
-      this.sendFrame(FrameBuilder.text(textBuffer))
-    }
-
-    // Process any remaining text in the sentence buffer
+    // Process any remaining text in the buffer
     sentenceBuffer.flush()
 
     // Signal that no more audio promises will be added
     audioPromiseQueue.markComplete()
 
-    // Extract suggestions and clean response from the full response
-    const { cleanedResponse, suggestedResponses } = this.extractSuggestedResponses(fullResponse)
+    // Generate suggested responses with a separate LLM call
+    const suggestedResponses = await this.generateSuggestedResponses(fullResponse, characterId)
     
-    // Send suggested responses if any were found
+    // Send suggested responses if any were generated
     if (suggestedResponses.length > 0) {
       this.sendFrame(FrameBuilder.suggestedResponses(suggestedResponses))
     }
 
-    // Save the clean response (without suggestions) to the database
+    // Save the full response to the database
     await this.thread.save(
       this.userId,
       this.messages,
-      cleanedResponse
+      fullResponse
     )
   }
 
@@ -185,29 +158,49 @@ export class StreamingManager {
 
 
   /**
-   * Extracts suggested responses from the LLM output and returns cleaned response
-   * @param fullResponse - The complete response from the LLM
-   * @returns Object containing cleaned response and extracted suggestions
+   * Generates suggested responses using a separate LLM call
+   * @param assistantResponse - The assistant's response that was just generated
+   * @param characterId - The character ID (used to determine character context)
+   * @returns Array of suggested follow-up responses
    */
-  private extractSuggestedResponses(fullResponse: string): { cleanedResponse: string, suggestedResponses: string[] } {
-    const suggestionsRegex = /\[SUGG\]([\s\S]*?)\[\/SUGG\]/
-    const match = fullResponse.match(suggestionsRegex)
-    
-    if (!match) {
-      return { cleanedResponse: fullResponse, suggestedResponses: [] }
+  private async generateSuggestedResponses(assistantResponse: string, characterId: CharacterId): Promise<string[]> {
+    try {
+      // Build the conversation context for the suggestions call
+      const conversationContext = [
+        ...this.messages,
+        { role: "assistant" as const, content: assistantResponse }
+      ]
+
+      // Get the character's suggestions prompt
+      const character = getCharacter(characterId)
+      const suggestionsPrompt = character.suggestionsPrompt
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4.1-nano",
+        messages: [
+          { role: "system", content: suggestionsPrompt },
+          ...conversationContext,
+          { 
+            role: "user" as const, 
+            content: "Based on our conversation so far, suggest 3 natural follow-up questions I might ask. Return only the 3 questions, one per line, without numbers or formatting." 
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 150
+      })
+
+      const suggestionsText = response.choices[0]?.message?.content || ""
+      const suggestions = suggestionsText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .slice(0, 3) // Ensure we only take 3 suggestions
+
+      return suggestions
+    } catch (error) {
+      console.error("Error generating suggested responses:", error)
+      return []
     }
-    
-    const suggestionsText = match[1].trim()
-    const suggestions = suggestionsText
-      .split('\n')
-      .filter(line => line.trim().match(/^\d+\./))
-      .map(line => line.replace(/^\d+\.\s*/, '').trim())
-      .filter(suggestion => suggestion.length > 0)
-    
-    // Remove the suggestions section from the response
-    const cleanedResponse = fullResponse.replace(suggestionsRegex, '').trim()
-    
-    return { cleanedResponse, suggestedResponses: suggestions }
   }
 
   /**

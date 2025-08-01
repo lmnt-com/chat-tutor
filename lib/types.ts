@@ -30,6 +30,7 @@ export interface AudioFrame extends BaseFrame {
   format: 'mp3'
   sampleRate: number
   duration?: number
+  sentenceId?: string // correlate audio with sentence
 }
 
 
@@ -44,7 +45,14 @@ export interface SuggestedResponsesFrame extends BaseFrame {
   suggestions: string[] // Array of 3 suggested responses
 }
 
-export type StreamFrame = TextFrame | AudioFrame | StatusFrame | SuggestedResponsesFrame
+export interface SentenceBoundaryFrame extends BaseFrame {
+  type: 'sentence_boundary'
+  sentenceId: string
+  startPosition: number
+  endPosition: number
+}
+
+export type StreamFrame = TextFrame | AudioFrame | StatusFrame | SuggestedResponsesFrame | SentenceBoundaryFrame
 
 // Server-side frame builders
 export class FrameBuilder {
@@ -56,12 +64,13 @@ export class FrameBuilder {
     }
   }
 
-  static audio(data: string, sampleRate: number = 24000): AudioFrame {
+  static audio(data: string, sampleRate: number = 24000, sentenceId?: string): AudioFrame {
     return {
       type: 'audio',
       data,
       format: 'mp3',
       sampleRate,
+      sentenceId,
       timestamp: Date.now()
     }
   }
@@ -83,6 +92,28 @@ export class FrameBuilder {
       timestamp: Date.now()
     }
   }
+
+  static sentenceBoundary(sentenceId: string, startPosition: number, endPosition: number): SentenceBoundaryFrame {
+    return {
+      type: 'sentence_boundary',
+      sentenceId,
+      startPosition,
+      endPosition,
+      timestamp: Date.now()
+    }
+  }
+}
+
+export interface SentenceSpan {
+  id: string
+  start: number
+  end: number
+}
+
+export interface MessageHighlighting {
+  messageId: string
+  sentences: SentenceSpan[]
+  activeSentenceId: string | null
 }
 
 // Client-side frame handlers
@@ -91,5 +122,6 @@ export interface FrameHandler {
   onAudioFrame(frame: AudioFrame): void
   onStatusFrame(frame: StatusFrame): void
   onSuggestedResponsesFrame(frame: SuggestedResponsesFrame): void
+  onSentenceBoundaryFrame(frame: SentenceBoundaryFrame): void
   onError(error: Error): void
 }

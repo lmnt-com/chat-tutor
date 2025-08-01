@@ -157,6 +157,14 @@ export function AppSidebar({
 
       <SidebarFooter>
         <SidebarMenu>
+          {currentCharacter && (
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={onCharacterSettingsClick} tooltip="Change Character">
+                <Users className="size-4" />
+                <span className="truncate">{getCharacter(currentCharacter).displayName}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {user ? (
             <>
               <SidebarMenuItem>
@@ -174,14 +182,6 @@ export function AppSidebar({
             </>
           ) : (
             <>
-              {currentCharacter && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={onCharacterSettingsClick} tooltip="Change Character">
-                    <Users className="size-4" />
-                    <span className="truncate">{getCharacter(currentCharacter).displayName}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => setShowAuthDialog(true)}>
                   <User className="size-4" />

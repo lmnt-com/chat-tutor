@@ -49,7 +49,7 @@ export class StreamingManager {
 
       this.sendFrame(FrameBuilder.status('processing', 'Generating response'))
 
-      const audioPromiseQueue = new PromiseQueue<string>()
+      const audioPromiseQueue = new PromiseQueue<{ audio: string, sentenceId: string }>()
 
       // Process text stream and audio concurrently
       await Promise.all([
@@ -75,14 +75,19 @@ export class StreamingManager {
   private async processTextStream(
     openaiStream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>, 
     characterId: CharacterId,
-    audioPromiseQueue: PromiseQueue<string>
+    audioPromiseQueue: PromiseQueue<{ audio: string, sentenceId: string }>
   ) {
     let fullResponse = ""
     const character = getCharacter(characterId)
     
-    const sentenceBuffer = new SentenceBuffer((sentence) => {
-      audioPromiseQueue.add(this.generateSpeechForSentence(sentence, character.voice))
-    })
+    const sentenceBuffer = new SentenceBuffer(
+      (sentenceId: string, start: number, end: number, sentence: string) => {
+        audioPromiseQueue.add(this.generateSpeechForSentenceWithId(sentence, character.voice, sentenceId))
+
+        // Send sentence boundary frame to client
+        this.sendFrame(FrameBuilder.sentenceBoundary(sentenceId, start, end))
+      }
+    )
 
     for await (const chunk of openaiStream) {
       const content = chunk.choices[0]?.delta?.content || ""
@@ -120,12 +125,13 @@ export class StreamingManager {
   }
 
   /**
-   * Generates speech for a sentence and returns the audio data as a base64 string
+   * Generates speech for a sentence and returns the audio data as a base64 string with sentence ID
    * @param sentence - The sentence to generate speech for.
    * @param voice - The voice to use for the speech.
-   * @returns A promise that resolves to the audio data as a base64 string.
+   * @param sentenceId - The ID of the sentence for correlation.
+   * @returns A promise that resolves to an object with audio data and sentence ID.
    */
-  private async generateSpeechForSentence(sentence: string, voice: string): Promise<string> {
+  private async generateSpeechForSentenceWithId(sentence: string, voice: string, sentenceId: string): Promise<{ audio: string, sentenceId: string }> {
     try {
       const speechResponse = await this.lmnt.speech.generate({
         text: sentence,
@@ -134,7 +140,8 @@ export class StreamingManager {
       })
       const audioBlob = await speechResponse.blob()
       const audioBuffer = await audioBlob.arrayBuffer()
-      return Buffer.from(audioBuffer).toString('base64')
+      const audioBase64 = Buffer.from(audioBuffer).toString('base64')
+      return { audio: audioBase64, sentenceId }
     } catch (error) {
       console.error("Error generating speech for sentence:", error)
       throw error
@@ -145,10 +152,10 @@ export class StreamingManager {
    * Sends audio data to the client as it is ready
    * @param audioPromiseQueue - The queue of audio promises.
    */
-  private async processAudioQueue(audioPromiseQueue: PromiseQueue<string>): Promise<void> {
+  private async processAudioQueue(audioPromiseQueue: PromiseQueue<{ audio: string, sentenceId: string }>): Promise<void> {
     await audioPromiseQueue.process(
       (audioData) => {
-        this.sendFrame(FrameBuilder.audio(audioData))
+        this.sendFrame(FrameBuilder.audio(audioData.audio, 24000, audioData.sentenceId))
       },
       (error, index) => {
         console.error(`Error processing audio at index ${index}:`, error)

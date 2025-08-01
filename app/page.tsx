@@ -18,6 +18,8 @@ import { CharacterSelectionModal } from "@/components/character-selection-modal"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { CharacterId, getCharacter } from "@/lib/characters"
 import { SuggestedResponseBox } from "@/components/suggested-response-box"
+import { HighlightedMessage } from "@/components/highlighted-message"
+import type { SentenceSpan } from "@/lib/types"
 
 export default function HistoryTutor() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -33,7 +35,8 @@ export default function HistoryTutor() {
   const [showCharacterSelection, setShowCharacterSelection] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([])
-  const [previousSuggestionsLength, setPreviousSuggestionsLength] = useState(0)
+  const [activeHighlight, setActiveHighlight] = useState<{ messageId: string | null; sentenceId: string | null } | null>(null)
+  const [currentMessageSentenceHighlights, setCurrentMessageSentenceHighlights] = useState<SentenceSpan[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
@@ -99,6 +102,7 @@ export default function HistoryTutor() {
       timestamp: new Date(),
     }
     setMessages([welcomeMessage])
+    setActiveHighlight({ messageId: null, sentenceId: null })
   }, [characterId])
 
   useEffect(() => {
@@ -114,14 +118,13 @@ export default function HistoryTutor() {
 
   // Auto-scroll when dynamic suggestions appear
   useEffect(() => {
-    if (dynamicSuggestions.length > 0 && previousSuggestionsLength === 0) {
+    if (dynamicSuggestions.length > 0) {
       // New suggestions appeared, scroll to bottom to show them
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
       }, 200) // Small delay to allow for animation
     }
-    setPreviousSuggestionsLength(dynamicSuggestions.length)
-  }, [dynamicSuggestions.length, previousSuggestionsLength])
+  }, [dynamicSuggestions.length])
 
   useEffect(() => {
     const focusInput = () => {
@@ -183,6 +186,7 @@ export default function HistoryTutor() {
           timestamp: new Date(msg.created_at),
         }))
         setMessages(formattedMessages)
+        setActiveHighlight({ messageId: null, sentenceId: null })
       }
     } catch (error) {
       console.error("Error in loadThreadMessages:", error)
@@ -201,6 +205,7 @@ export default function HistoryTutor() {
     if (!messageText.trim() || isLoading || isUserLoading || !characterId) return
 
     setDynamicSuggestions([])
+    setActiveHighlight({ messageId: null, sentenceId: null })
 
     if (frameHandlerRef.current) {
       frameHandlerRef.current.stopAudio()
@@ -243,7 +248,6 @@ export default function HistoryTutor() {
       const reader = response.body?.getReader()
       if (!reader) throw new Error("No reader available")
 
-      let assistantMessage = ""
       const assistantMessageObj: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -253,20 +257,53 @@ export default function HistoryTutor() {
 
       setMessages((prev) => [...prev, assistantMessageObj])
 
-      frameHandlerRef.current = new ClientFrameHandler(
-        (content: string) => {
-          assistantMessage += content
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === assistantMessageObj.id ? { ...msg, content: assistantMessage } : msg)),
-          )
-        },
-        (status: string, message?: string) => {
-          console.log("Status update:", status, message)
-        },
-        (suggestions: string[]) => {
+      if (!frameHandlerRef.current) {
+        // Handler for streaming text content updates
+        const handleTextUpdate = (content: string) => {
+          const currentMessageId = frameHandlerRef.current?.getCurrentMessageId()
+          if (currentMessageId) {
+            setMessages((prev) =>
+              prev.map((msg) => {
+                if (msg.id === currentMessageId) {
+                  return { ...msg, content: msg.content + content }
+                }
+                return msg
+              })
+            )
+          }
+        }
+
+        // Handler for server status updates (errors, completion, etc.)
+        const handleStatusUpdate = (status: string, message?: string) => {
+          console.log('Status update:', status, message)
+        }
+
+        // Handler for AI-generated conversation suggestions
+        const handleSuggestionsUpdate = (suggestions: string[]) => {
           setDynamicSuggestions(suggestions)
         }
-      )
+
+        // Handler for sentence highlighting data (for current message only)
+        const handleSentenceHighlights = (_messageId: string, sentenceSpans: SentenceSpan[]) => {
+          setCurrentMessageSentenceHighlights(sentenceSpans)
+        }
+
+        // Handler for active sentence highlighting during audio playback
+        const handleActiveHighlight = (messageId: string | null, sentenceId: string | null) => {
+          setActiveHighlight({ messageId, sentenceId })
+        }
+
+        frameHandlerRef.current = new ClientFrameHandler(
+          handleTextUpdate,
+          handleStatusUpdate,
+          handleSuggestionsUpdate,
+          handleSentenceHighlights,
+          handleActiveHighlight
+        )
+      }
+
+      // Tell the handler which message we're looking at
+      frameHandlerRef.current.startMessage(assistantMessageObj.id)
 
       frameHandlerRef.current.setAudioEnabled(isAudioEnabled)
 
@@ -377,7 +414,16 @@ export default function HistoryTutor() {
                       className={cn("max-w-[80%] p-2", message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-50")}
                     >
                       <CardContent className="px-2">
-                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        {message.role === "assistant" ? (
+                          <HighlightedMessage
+                            content={message.content}
+                            currentlyPlayingSentenceId={activeHighlight?.sentenceId || null}
+                            isCurrentMessage={activeHighlight?.messageId === message.id}
+                            sentences={currentMessageSentenceHighlights}
+                          />
+                        ) : (
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -471,6 +517,7 @@ export default function HistoryTutor() {
             localStorage.setItem('historyTutorCharacter', newCharacter)
             setMessages([])
             setDynamicSuggestions([])
+            setActiveHighlight({ messageId: null, sentenceId: null })
             setCurrentThreadId(null)
             setHasStarted(false)
             setShowSettings(false)

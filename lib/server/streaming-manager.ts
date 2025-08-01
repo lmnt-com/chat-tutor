@@ -15,6 +15,8 @@ export class StreamingManager {
   private openai: OpenAI
   private thread: Thread
   private userId: string | null
+  private messageId: string | null
+
 
   constructor(
     openai: OpenAI,
@@ -22,7 +24,8 @@ export class StreamingManager {
     controller: ReadableStreamDefaultController<Uint8Array>,
     threadId: string | null,
     userId: string | null,
-    messages: Message[]
+    messages: Message[],
+    messageId: string | null = null
   ) {
     this.controller = controller
     this.lmnt = lmnt
@@ -30,12 +33,14 @@ export class StreamingManager {
     this.openai = openai
     this.thread = new Thread(threadId)
     this.userId = userId
+    this.messageId = messageId
   }
 
   async streamWithSpeech(
     messages: Message[],
     systemPrompt: string,
-    characterId: CharacterId
+    characterId: CharacterId,
+    imageGenerationEnabled: boolean = true
   ) {
     try {
       this.sendFrame(FrameBuilder.status('started', 'Generating response'))
@@ -53,11 +58,9 @@ export class StreamingManager {
 
       // Process text stream and audio concurrently
       await Promise.all([
-        this.processTextStream(openaiStream, characterId, audioPromiseQueue),
+        this.processTextStream(openaiStream, characterId, audioPromiseQueue, imageGenerationEnabled),
         this.processAudioQueue(audioPromiseQueue)
       ])
-
-      this.sendFrame(FrameBuilder.status('completed', 'Response complete'))
 
     } catch (error) {
       console.error("Streaming error:", error)
@@ -73,13 +76,14 @@ export class StreamingManager {
    * @param audioPromiseQueue - The queue of audio promises.
    */
   private async processTextStream(
-    openaiStream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>, 
+    openaiStream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>,
     characterId: CharacterId,
-    audioPromiseQueue: PromiseQueue<{ audio: string, sentenceId: string }>
+    audioPromiseQueue: PromiseQueue<{ audio: string, sentenceId: string }>,
+    imageGenerationEnabled: boolean
   ) {
     let fullResponse = ""
     const character = getCharacter(characterId)
-    
+
     const sentenceBuffer = new SentenceBuffer(
       (sentenceId: string, start: number, end: number, sentence: string) => {
         audioPromiseQueue.add(this.generateSpeechForSentenceWithId(sentence, character.voice, sentenceId))
@@ -93,10 +97,10 @@ export class StreamingManager {
       const content = chunk.choices[0]?.delta?.content || ""
       if (content) {
         fullResponse += content
-        
+
         // Send text frame to client immediately to be displayed
         this.sendFrame(FrameBuilder.text(content))
-        
+
         // SentenceBuffer will send complete sentences to LMNT as they are ready
         sentenceBuffer.addText(content)
       }
@@ -108,15 +112,21 @@ export class StreamingManager {
     // Signal that no more audio promises will be added
     audioPromiseQueue.markComplete()
 
-    // Generate suggested responses with a separate LLM call
-    const suggestedResponses = await this.generateSuggestedResponses(fullResponse, characterId)
-    
-    // Send suggested responses if any were generated
-    if (suggestedResponses.length > 0) {
-      this.sendFrame(FrameBuilder.suggestedResponses(suggestedResponses))
+        const shouldGenerateImage = await this.shouldGenerateImage(fullResponse, characterId)
+    if (shouldGenerateImage.generate && imageGenerationEnabled) {
+      this.sendFrame(FrameBuilder.status('generating_image', 'Generating image...'))
     }
+    this.sendFrame(FrameBuilder.status('completed', 'Response complete'))
+    
+    await Promise.all([
+      shouldGenerateImage.generate && shouldGenerateImage.prompt && this.messageId && imageGenerationEnabled
+        ? this.generateAndSendImage(shouldGenerateImage.prompt, this.messageId)
+        : Promise.resolve(),
+      
+      this.generateSuggestedResponses(fullResponse, characterId)
+    ])
 
-    // Save the full response to the database
+    // Save the full response to the database (text only)
     await this.thread.save(
       this.userId,
       this.messages,
@@ -165,12 +175,11 @@ export class StreamingManager {
 
 
   /**
-   * Generates suggested responses using a separate LLM call
+   * Generates suggested responses using a separate LLM call and sends them to the client
    * @param assistantResponse - The assistant's response that was just generated
    * @param characterId - The character ID (used to determine character context)
-   * @returns Array of suggested follow-up responses
    */
-  private async generateSuggestedResponses(assistantResponse: string, characterId: CharacterId): Promise<string[]> {
+  private async generateSuggestedResponses(assistantResponse: string, characterId: CharacterId) {
     try {
       // Build the conversation context for the suggestions call
       const conversationContext = [
@@ -187,9 +196,9 @@ export class StreamingManager {
         messages: [
           { role: "system", content: suggestionsPrompt },
           ...conversationContext,
-          { 
-            role: "user" as const, 
-            content: "Based on our conversation so far, suggest 3 natural follow-up questions I might ask. Return only the 3 questions, one per line, without numbers or formatting." 
+          {
+            role: "user" as const,
+            content: "Based on our conversation so far, suggest 3 natural follow-up questions I might ask. Return only the 3 questions, one per line, without numbers or formatting."
           }
         ],
         temperature: 0.8,
@@ -203,10 +212,92 @@ export class StreamingManager {
         .filter(line => line.length > 0)
         .slice(0, 3) // Ensure we only take 3 suggestions
 
-      return suggestions
+      if (suggestions.length > 0) {
+        this.sendFrame(FrameBuilder.suggestedResponses(suggestions))
+      }
     } catch (error) {
       console.error("Error generating suggested responses:", error)
-      return []
+    }
+  }
+
+  /**
+   * Determines if an image should be generated for the given response
+   * @param response - The assistant's response
+   * @param characterId - The character ID for context
+   * @returns Object with generate flag and prompt if applicable
+   */
+  private async shouldGenerateImage(response: string, characterId: CharacterId): Promise<{ generate: boolean; prompt?: string }> {
+    try {
+      const character = getCharacter(characterId)
+
+      const prompt = `You are ${character.displayName}. Based on your response about history, determine if a visual image would help enhance the learning experience.
+
+Your response: "${response}"
+
+If an image would be helpful, respond with:
+GENERATE_IMAGE: [detailed description for DALL-E image generation, written in a style appropriate for ${character.displayName}]
+
+If no image is needed, respond with:
+NO_IMAGE
+
+Guidelines:
+- Only generate images for historical figures, events, places, artifacts, maps, or concepts that would benefit from visual representation
+- Make the image description detailed but educational
+- Consider your character's teaching style: ${character.description}
+- Avoid generating images for abstract concepts, modern topics, or conversations that don't need visuals`
+
+      const imageDecision = await this.openai.chat.completions.create({
+        model: "gpt-4.1-nano",
+        messages: [
+          { role: "system", content: prompt },
+          { role: "user", content: "If useful, generate an image for this response." }
+        ],
+        temperature: 0.3,
+        max_tokens: 200
+      })
+
+      const decision = imageDecision.choices[0]?.message?.content || ""
+
+      if (decision.includes("GENERATE_IMAGE:")) {
+        const imagePrompt = decision.split("GENERATE_IMAGE:")[1]?.trim()
+        if (imagePrompt) {
+          return { generate: true, prompt: imagePrompt }
+        }
+      }
+
+      return { generate: false }
+    } catch (error) {
+      console.error("Error checking if image should be generated:", error)
+      return { generate: false }
+    }
+  }
+
+  /**
+   * Generates an image and sends it to the client
+   * @param prompt - The image generation prompt
+   * @param messageId - The message ID to associate with the image
+   */
+  private async generateAndSendImage(prompt: string, messageId: string): Promise<void> {
+    try {
+      const response = await this.openai.images.generate({
+        model: "gpt-image-1",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        stream: true,
+        quality: "low",
+      })
+
+      for await (const chunk of response) {
+        if (chunk.type === 'image_generation.completed') {
+          if (chunk.b64_json) {
+            this.sendFrame(FrameBuilder.image(chunk.b64_json, prompt, messageId))
+            return
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error generating image:", error)
     }
   }
 
@@ -215,12 +306,17 @@ export class StreamingManager {
    * @param frame - The frame to send.
    */
   private sendFrame(frame: StreamFrame) {
-    if (this.controller.desiredSize === null) {
-      console.warn("Attempted to send frame after stream closed")
-      return
+    // Check if controller is still open
+    try {
+      if (this.controller.desiredSize === null) {
+        console.warn("Attempted to send frame after stream closed")
+        return
+      }
+
+      const frameData = JSON.stringify(frame)
+      this.controller.enqueue(this.encoder.encode(`data: ${frameData}\n\n`))
+    } catch {
+      console.warn("Controller already closed, skipping frame:", frame.type)
     }
-    
-    const frameData = JSON.stringify(frame)
-    this.controller.enqueue(this.encoder.encode(`data: ${frameData}\n\n`))
   }
 }

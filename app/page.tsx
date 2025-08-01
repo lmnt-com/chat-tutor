@@ -24,9 +24,11 @@ import type { SentenceSpan } from "@/lib/types"
 
 export default function HistoryTutor() {
   const [messages, setMessages] = useState<Message[]>([])
+
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
+  const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(true)
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([])
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
@@ -50,6 +52,11 @@ export default function HistoryTutor() {
       setCharacterId(savedCharacter as CharacterId)
     } else {
       setShowCharacterSelection(true)
+    }
+
+    const savedImageSetting = localStorage.getItem('historyTutorImageGeneration')
+    if (savedImageSetting !== null) {
+      setIsImageGenerationEnabled(savedImageSetting === 'true')
     }
   }, [])
 
@@ -116,16 +123,6 @@ export default function HistoryTutor() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
-
-  // Auto-scroll when dynamic suggestions appear
-  useEffect(() => {
-    if (dynamicSuggestions.length > 0) {
-      // New suggestions appeared, scroll to bottom to show them
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 200) // Small delay to allow for animation
-    }
-  }, [dynamicSuggestions.length])
 
   useEffect(() => {
     const focusInput = () => {
@@ -232,22 +229,6 @@ export default function HistoryTutor() {
       }
 
       const characterObj = getCharacter(characterId)
-      const response = await fetch("/api/chat-with-speech", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          threadId: currentThreadId,
-          userId: userId,
-          characterId: characterId,
-          systemPrompt: characterObj.prompt,
-        }),
-      })
-
-      if (!response.ok) throw new Error("Failed to get response")
-
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error("No reader available")
 
       const assistantMessageObj: Message = {
         id: (Date.now() + 1).toString(),
@@ -255,6 +236,25 @@ export default function HistoryTutor() {
         content: "",
         timestamp: new Date(),
       }
+
+              const response = await fetch("/api/chat-with-speech", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [...messages, userMessage],
+            threadId: currentThreadId,
+            userId: userId,
+            characterId: characterId,
+            systemPrompt: characterObj.prompt,
+            messageId: assistantMessageObj.id,
+            imageGenerationEnabled: isImageGenerationEnabled,
+          }),
+        })
+
+      if (!response.ok) throw new Error("Failed to get response")
+
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error("No reader available")
 
       setMessages((prev) => [...prev, assistantMessageObj])
 
@@ -275,13 +275,36 @@ export default function HistoryTutor() {
         }
 
         // Handler for server status updates (errors, completion, etc.)
-        const handleStatusUpdate = (status: string, message?: string) => {
-          console.log('Status update:', status, message)
+        const handleStatusUpdate = (status: string) => {
+          if (status === 'generating_image' && frameHandlerRef.current) {
+            const currentMessageId = frameHandlerRef.current.getCurrentMessageId()
+            if (currentMessageId) {
+              const placeholderMessage: Message = {
+                id: `image-placeholder-${Date.now()}`,
+                role: "assistant",
+                content: "",
+                timestamp: new Date(),
+                imageGenerating: true
+              }
+              
+              setMessages((prev) => [...prev, placeholderMessage])
+            }
+          } else if (status === 'completed') {
+            // Main response is complete, stop loading state
+            setIsLoading(false)
+          } else if (status === 'error') {
+            // Error occurred, stop loading state
+            setIsLoading(false)
+          }
         }
 
         // Handler for AI-generated conversation suggestions
         const handleSuggestionsUpdate = (suggestions: string[]) => {
           setDynamicSuggestions(suggestions)
+
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+          }, 100)
         }
 
         // Handler for sentence highlighting data (for current message only)
@@ -294,12 +317,37 @@ export default function HistoryTutor() {
           setActiveHighlight({ messageId, sentenceId })
         }
 
+        // Handler for image updates
+        const handleImageUpdate = (imageData: string, description: string) => {
+          setMessages((prev) => {
+            // Find and replace the placeholder message with the actual image
+            const updated = prev.map((msg) => {
+              if (msg.imageGenerating) {
+                // Replace placeholder with actual image
+                return {
+                  ...msg,
+                  imageData,
+                  imageDescription: description,
+                  imageGenerating: false
+                }
+              }
+              return msg
+            })
+            
+            return updated
+          })
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+          }, 100)
+        }
+
         frameHandlerRef.current = new ClientFrameHandler(
           handleTextUpdate,
           handleStatusUpdate,
           handleSuggestionsUpdate,
           handleSentenceHighlights,
-          handleActiveHighlight
+          handleActiveHighlight,
+          handleImageUpdate
         )
       }
 
@@ -342,7 +390,6 @@ export default function HistoryTutor() {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
-    } finally {
       setIsLoading(false)
     }
   }
@@ -430,18 +477,36 @@ export default function HistoryTutor() {
                             : "bg-gray-50"
                       )}
                     >
-                      <CardContent className="px-4">
-                        {message.role === "assistant" ? (
-                          <HighlightedMessage
-                            content={message.content}
-                            currentlyPlayingSentenceId={activeHighlight?.sentenceId || null}
-                            isCurrentMessage={activeHighlight?.messageId === message.id}
-                            sentences={currentMessageSentenceHighlights}
-                          />
-                        ) : (
-                          <p className="text-base leading-relaxed">{message.content}</p>
-                        )}
-                      </CardContent>
+                        <CardContent className="px-4">
+                          {message.role === "assistant" ? (
+                            <>
+                              {message.content && (
+                                <HighlightedMessage
+                                  content={message.content}
+                                  currentlyPlayingSentenceId={activeHighlight?.sentenceId || null}
+                                  isCurrentMessage={activeHighlight?.messageId === message.id}
+                                  sentences={currentMessageSentenceHighlights}
+                                />
+                              )}
+                              
+                              {message.imageGenerating && !message.imageData && (
+                                <div className="size-64 bg-gray-200 rounded-lg shadow-md animate-pulse flex items-center justify-center">
+                                  <div className="text-gray-500 text-sm">Generating image...</div>
+                                </div>
+                              )}
+                              
+                              {message.imageData && (
+                                <img 
+                                  src={`data:image/png;base64,${message.imageData}`} 
+                                  alt={message.imageDescription || "Generated historical image"}
+                                  className="w-full max-w-sm rounded-lg shadow-md"
+                                />
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-base leading-relaxed">{message.content}</p>
+                          )}
+                        </CardContent>
                     </Card>
                     {message.role === "user" && (
                       <div className="flex-shrink-0 mt-1">
@@ -545,6 +610,11 @@ export default function HistoryTutor() {
             setCurrentThreadId(null)
             setHasStarted(false)
             setShowSettings(false)
+          }}
+          imageGenerationEnabled={isImageGenerationEnabled}
+          onImageGenerationToggle={(enabled) => {
+            setIsImageGenerationEnabled(enabled)
+            localStorage.setItem('historyTutorImageGeneration', enabled.toString())
           }}
         />
       )}

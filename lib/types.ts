@@ -5,6 +5,9 @@ export interface Message {
   role: "user" | "assistant"
   content: string
   timestamp: Date
+  imageData?: string
+  imageDescription?: string
+  imageGenerating?: boolean // track if image generation is in progress
 }
 
 export interface ChatThread {
@@ -36,7 +39,7 @@ export interface AudioFrame extends BaseFrame {
 
 export interface StatusFrame extends BaseFrame {
   type: 'status'
-  status: 'started' | 'processing' | 'completed' | 'error'
+  status: 'started' | 'processing' | 'completed' | 'error' | 'generating_image'
   message?: string
 }
 
@@ -52,7 +55,14 @@ export interface SentenceBoundaryFrame extends BaseFrame {
   endPosition: number
 }
 
-export type StreamFrame = TextFrame | AudioFrame | StatusFrame | SuggestedResponsesFrame | SentenceBoundaryFrame
+export interface ImageFrame extends BaseFrame {
+  type: 'image'
+  imageData: string
+  description: string
+  messageId: string // correlate image with message
+}
+
+export type StreamFrame = TextFrame | AudioFrame | StatusFrame | SuggestedResponsesFrame | SentenceBoundaryFrame | ImageFrame
 
 // Server-side frame builders
 export class FrameBuilder {
@@ -102,6 +112,16 @@ export class FrameBuilder {
       timestamp: Date.now()
     }
   }
+
+  static image(imageData: string, description: string, messageId: string): ImageFrame {
+    return {
+      type: 'image',
+      imageData,
+      description,
+      messageId,
+      timestamp: Date.now()
+    }
+  }
 }
 
 export interface SentenceSpan {
@@ -123,5 +143,6 @@ export interface FrameHandler {
   onStatusFrame(frame: StatusFrame): void
   onSuggestedResponsesFrame(frame: SuggestedResponsesFrame): void
   onSentenceBoundaryFrame(frame: SentenceBoundaryFrame): void
+  onImageFrame(frame: ImageFrame): void
   onError(error: Error): void
 }

@@ -1,4 +1,4 @@
-import { StreamFrame, TextFrame, AudioFrame, StatusFrame, SuggestedResponsesFrame, SentenceBoundaryFrame, FrameHandler, SentenceSpan } from './types'
+import { StreamFrame, TextFrame, AudioFrame, StatusFrame, SuggestedResponsesFrame, SentenceBoundaryFrame, ImageFrame, FrameHandler, SentenceSpan } from './types'
 
 // Declare WebKit AudioContext interface
 declare global {
@@ -86,17 +86,20 @@ export class ClientFrameHandler implements FrameHandler {
   private onTextUpdate: (content: string) => void
   private onStatusUpdate: (status: string, message?: string) => void
   private onSuggestedResponsesUpdate?: (suggestions: string[]) => void
+  private onImageUpdate?: (imageData: string, description: string, messageId: string) => void
 
   constructor(
     onTextUpdate: (content: string) => void,
     onStatusUpdate: (status: string, message?: string) => void,
     onSuggestedResponsesUpdate?: (suggestions: string[]) => void,
     onSentencesChanged?: (messageId: string, sentenceSpans: SentenceSpan[]) => void,
-    onActiveChanged?: (messageId: string | null, sentenceId: string | null) => void
+    onActiveChanged?: (messageId: string | null, sentenceId: string | null) => void,
+    onImageUpdate?: (imageData: string, description: string, messageId: string) => void
   ) {
     this.onTextUpdate = onTextUpdate
     this.onStatusUpdate = onStatusUpdate
     this.onSuggestedResponsesUpdate = onSuggestedResponsesUpdate
+    this.onImageUpdate = onImageUpdate
     
     if (onSentencesChanged && onActiveChanged) {
       this.sentenceManager.setCallbacks(onSentencesChanged, onActiveChanged)
@@ -139,6 +142,12 @@ export class ClientFrameHandler implements FrameHandler {
 
   onSentenceBoundaryFrame(frame: SentenceBoundaryFrame): void {
     this.sentenceManager.addSentence(frame.sentenceId, frame.startPosition, frame.endPosition)
+  }
+
+  onImageFrame(frame: ImageFrame): void {
+    if (this.onImageUpdate) {
+      this.onImageUpdate(frame.imageData, frame.description, frame.messageId)
+    }
   }
 
   onError(error: Error): void {
@@ -233,6 +242,9 @@ export class ClientFrameHandler implements FrameHandler {
           break
         case 'sentence_boundary':
           this.onSentenceBoundaryFrame(frame as SentenceBoundaryFrame)
+          break
+        case 'image':
+          this.onImageFrame(frame as ImageFrame)
           break
         default:
           const exhaustiveCheck: never = frame

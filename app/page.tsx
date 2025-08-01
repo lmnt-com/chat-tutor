@@ -233,7 +233,7 @@ export default function HistoryTutor() {
           messages: [...messages, userMessage],
           threadId: currentThreadId,
           userId: userId,
-          voice: characterObj.voice,
+          characterId: characterId,
           systemPrompt: characterObj.prompt,
         }),
       })

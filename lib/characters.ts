@@ -18,6 +18,7 @@ export interface Character {
   firstMessage: string
   suggestedTopics: string[]
   voice: string
+  suggestionsPrompt: string
 }
 
 const fiona: Character = {
@@ -62,16 +63,7 @@ Your responses will be spoken aloud by a TTS system. Write as if you're having a
 - Respond with max 2-3 sentences at a time
 - Use encouraging language and celebrate their curiosity
 
-[SUGGESTED RESPONSES]
-After your main response, ALWAYS provide exactly 3 suggested follow-up responses that the student might want to ask. These should be natural, engaging questions that encourage further exploration of the topic. Format them as follows:
 
-  [SUGG]
-  1. Tell me more about [specific aspect]
-  2. What about [related topic or comparison]
-  3. How did [process or event] work?
-  [/SUGG]
-
-IMPORTANT: Always include both the opening [SUGG] and closing [/SUGG] tags.
 
 [FINAL CHECK]
 Before responding, read your answer aloud in your head - does it sound like natural human speech appropriate for a young child?
@@ -85,7 +77,14 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Vikings",
     "Medieval Knights"
   ],
-  voice: "fdda0922-a9ac-4393-9b3a-daf5e749c3ae"
+  voice: "fdda0922-a9ac-4393-9b3a-daf5e749c3ae",
+  suggestionsPrompt: `You are helping generate follow-up questions that a young child (ages 6-12) might naturally ask about history. 
+    The questions should be:
+    - Simple and easy to understand
+    - Curious and engaging
+    - About specific, concrete things (not abstract concepts)
+    - Encouraging further exploration
+    Example: "What did pirates eat on their ships?" or "How big were dinosaurs?"`
 }
 
 const merlin: Character = {
@@ -131,16 +130,7 @@ Your responses will be spoken aloud by a TTS system. Write as if you're having a
 - Respond with max 3-4 sentences at a time
 - Encourage deeper thinking and historical analysis
 
-[SUGGESTED RESPONSES]
-After your main response, ALWAYS provide exactly 3 suggested follow-up responses that the student might want to ask. These should be thought-provoking questions that encourage deeper analysis and critical thinking. Format them as follows:
 
-  [SUGG]
-  1. {Question 1}
-  2. {Question 2}
-  3. {Question 3}
-  [/SUGG]
-
-IMPORTANT: Always include both the opening [SUGG] and closing [/SUGG] tags.
 
 [FINAL CHECK]
 Before responding, read your answer aloud in your head - does it sound like natural human speech appropriate for a teenager?
@@ -154,7 +144,14 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Industrial Revolution",
     "Civil Rights Movement"
   ],
-  voice: "672d826d-0a6e-4c40-afa9-11cc4c8f91e5"
+  voice: "672d826d-0a6e-4c40-afa9-11cc4c8f91e5",
+  suggestionsPrompt: `You are helping generate follow-up questions that a teenager (ages 13-17) might ask about history.
+    The questions should be:
+    - More analytical and thought-provoking
+    - About connections and deeper meaning
+    - Encouraging critical thinking
+    - About different perspectives or causes/effects
+    Example: "How did this event influence modern society?" or "What were the different viewpoints at the time?"`
 }
 
 const cassian: Character = {
@@ -199,16 +196,7 @@ Your responses will be spoken aloud by a TTS system. Write as if you're having a
 - Respond with max 3-4 sentences at a time
 - Encourage deeper analysis and independent learning
 
-[SUGGESTED RESPONSES]
-After your main response, ALWAYS provide exactly 3 suggested follow-up responses that the student might want to ask. These should be sophisticated questions that encourage academic-level analysis and research. Format them as follows:
 
-  [SUGG]
-  1. What are the historiographical debates surrounding [topic]?
-  2. How do primary sources reveal [specific aspect]?
-  3. What are the long-term implications of [event/pattern]?
-  [/SUGG]
-
-IMPORTANT: Always include both the opening [SUGG] and closing [/SUGG] tags.
 
 [FINAL CHECK]
 Before responding, read your answer aloud in your head - does it sound like natural human speech appropriate for an adult learner?
@@ -222,7 +210,14 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Enlightenment",
     "Mongol Empire"
   ],
-  voice: "67d691b1-ef60-40e6-b7e9-2b984c2c93f2"
+  voice: "67d691b1-ef60-40e6-b7e9-2b984c2c93f2",
+  suggestionsPrompt: `You are helping generate follow-up questions that an adult learner might ask about history.
+    The questions should be:
+    - Sophisticated and academic
+    - About complex analysis and research
+    - Encouraging independent study
+    - About historiographical debates or primary sources
+    Example: "What do primary sources reveal about this?" or "How do historians debate this topic?"`
 }
 
 const brody: Character = {
@@ -264,16 +259,7 @@ Your responses will be spoken aloud by a TTS system. Write as if you're having a
 - Respond with max 3-4 sentences at a time
 - Always sound confused but enthusiastic
 
-[SUGGESTED RESPONSES]
-After your main response, ALWAYS provide exactly 3 suggested follow-up responses that the student might want to ask. These should be silly, fun questions that encourage further exploration of the topic. Format them as follows:
 
-  [SUGG]
-  1. {Response 1}
-  2. {Response 2}
-  3. {Response 3}
-  [/SUGG]
-
-IMPORTANT: Always include both the opening [SUGG] and closing [/SUGG] tags.
 
 [FINAL CHECK]
 Before responding, read your answer aloud in your head - does it sound like a confused surfer dude who's terrible at teaching history but thinks he's doing great?
@@ -287,7 +273,13 @@ Before responding, read your answer aloud in your head - does it sound like a co
     "Vikings",
     "Renaissance"
   ],
-  voice: "6b96d694-9d6b-48be-811f-e5056263f3ca"
+  voice: "6b96d694-9d6b-48be-811f-e5056263f3ca",
+  suggestionsPrompt: `You are helping generate follow-up questions that are silly, fun, and fitting Brody's vibe.
+    The questions should be:
+    - Casual and laid-back (surfer dude style)
+    - Sometimes confused or mixed up
+    - Fun and engaging
+    - Still about history but with Brody's clueless charm`
 }
 
 export const CHARACTERS: Record<CharacterId, Character> = {

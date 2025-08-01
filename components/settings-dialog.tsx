@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 import { Separator } from "@/components/ui/separator"
 import { CharacterId } from "@/lib/characters"
@@ -12,13 +14,17 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void
   currentCharacter: CharacterId
   onCharacterSelect: (character: CharacterId) => void
+  imageGenerationEnabled: boolean
+  onImageGenerationToggle: (enabled: boolean) => void
 }
 
 export function SettingsDialog({
   open,
   onOpenChange,
   currentCharacter,
-  onCharacterSelect
+  onCharacterSelect,
+  imageGenerationEnabled,
+  onImageGenerationToggle
 }: SettingsDialogProps) {
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterId>(currentCharacter)
 
@@ -50,9 +56,30 @@ export function SettingsDialog({
           
           <Separator />
           
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Preferences</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="image-generation">Image Generation</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically generate images to enhance learning
+                  </p>
+                </div>
+                <Switch
+                  id="image-generation"
+                  checked={imageGenerationEnabled}
+                  onCheckedChange={onImageGenerationToggle}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              You can change your guide at any time.
+              You can change your guide and preferences at any time.
             </p>
           </div>
         </div>

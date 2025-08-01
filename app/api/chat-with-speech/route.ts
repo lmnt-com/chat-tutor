@@ -15,7 +15,7 @@ const lmnt = new Lmnt({ apiKey: process.env.LMNT_API_KEY! })
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, threadId, userId, characterId = CharacterId.Fiona, systemPrompt = "You are a helpful history tutor." } = await req.json()
+    const { messages, threadId, userId, characterId = CharacterId.Fiona, systemPrompt = "You are a helpful history tutor.", messageId, imageGenerationEnabled = true } = await req.json()
 
     const readableStream = new ReadableStream({
       async start(controller) {
@@ -26,9 +26,10 @@ export async function POST(req: NextRequest) {
             controller, 
             threadId,
             userId, 
-            messages
+            messages,
+            messageId
           )
-          await streamingManager.streamWithSpeech(messages, systemPrompt, characterId)
+          await streamingManager.streamWithSpeech(messages, systemPrompt, characterId, imageGenerationEnabled)
           
           // Send completion signal
           controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"))

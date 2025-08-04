@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { CharacterId, CHARACTERS } from "@/lib/characters"
+import { CharacterAvatar } from "@/components/character-avatar"
 
 interface CharacterTypeSelectorProps {
   selectedCharacter: CharacterId | null
@@ -23,46 +24,51 @@ export function CharacterTypeSelector({
       isCompact ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 gap-6"
     )}>
       {Object.values(CHARACTERS).map((character) => {
-        const Icon = character.icon
+        const themeClass = `theme-${character.id}`
         return (
-          <Card
-            key={character.id}
-            className={cn(
-              "cursor-pointer transition-all duration-200 border-2 bg-gray-50 border-gray-200 hover:bg-gray-100",
-              selectedCharacter === character.id && "ring-2 ring-blue-500 ring-offset-2"
-            )}
-            onClick={() => onCharacterSelect(character.id)}
-          >
-            <CardHeader>
-              <div className={cn("flex items-center gap-2", !isCompact && "gap-3")}>
-                <div className={cn(
-                  "rounded-md bg-white", 
-                  character.iconColor,
-                  isCompact ? "p-1.5" : "p-2 rounded-lg"
+          <div key={character.id} className={themeClass}>
+            <Card
+              className={cn(
+                "character-card cursor-pointer transition-all duration-300 h-full flex flex-col",
+                selectedCharacter === character.id 
+                  ? "ring-2 ring-blue-500 ring-offset-2 selected cursor-default" 
+                  : "hover:shadow-md"
+              )}
+              onClick={() => onCharacterSelect(character.id)}
+            >
+              <CardHeader className="flex-shrink-0">
+                <div className={cn("flex items-center gap-2", !isCompact && "gap-3")}>
+                  <CharacterAvatar 
+                    characterId={character.id} 
+                    size={isCompact ? "md" : "lg"}
+                    className="flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className={cn(
+                      "text-gray-900",
+                      isCompact ? "text-sm" : "text-lg"
+                    )}>
+                      {character.displayName}
+                    </CardTitle>
+                    <CardDescription className={cn(
+                      "font-medium text-gray-600",
+                      isCompact ? "text-xs" : "text-sm"
+                    )}>
+                      {character.subtitle}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col justify-between">
+                <p className={cn(
+                  "text-gray-600 leading-relaxed flex-1",
+                  isCompact ? "text-sm" : "text-base"
                 )}>
-                  <Icon className={cn(isCompact ? "size-4" : "size-6")} />
-                </div>
-                <div>
-                  <CardTitle className={cn(isCompact ? "text-sm" : "text-lg")}>
-                    {character.displayName}
-                  </CardTitle>
-                  <CardDescription className={cn(
-                    isCompact ? "text-xs" : "text-sm font-medium"
-                  )}>
-                    {character.subtitle}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className={cn(
-                "text-gray-600 leading-relaxed",
-                isCompact ? "text-sm" : "text-base"
-              )}>
-                {character.description}
-              </p>
-            </CardContent>
-          </Card>
+                  {character.description}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         )
       })}
     </div>

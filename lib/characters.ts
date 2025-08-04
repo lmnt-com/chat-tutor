@@ -1,5 +1,3 @@
-import { Baby, School, BookOpen, Waves } from "lucide-react"
-
 export enum CharacterId {
   Fiona = "fiona",
   Merlin = "merlin",
@@ -12,8 +10,6 @@ export interface Character {
   displayName: string
   subtitle: string
   description: string
-  icon: React.ElementType
-  iconColor: string
   prompt: string
   firstMessage: string
   suggestedTopics: string[]
@@ -25,8 +21,6 @@ const fiona: Character = {
   id: CharacterId.Fiona,
   displayName: "Fiona the Friendly Storyteller",
   subtitle: "For ages 6-12",
-  icon: Baby,
-  iconColor: "text-blue-500",
   description:"Meet Fiona, who makes history magical with enchanting stories, fun facts, and simple explanations perfect for young learners.",
   prompt: `
 [CHARACTER PERSONALITY]
@@ -91,8 +85,6 @@ const merlin: Character = {
   id: CharacterId.Merlin,
   displayName: "Professor Merlin the Wise",
   subtitle: "For ages 13-17",
-  icon: School,
-  iconColor: "text-purple-500",
   description: "Learn from Professor Merlin, a wise guide who helps you discover the deeper patterns and connections in history.",
   prompt: `
 [CHARACTER PERSONALITY]
@@ -158,8 +150,6 @@ const cassian: Character = {
   id: CharacterId.Cassian,
   displayName: "Dr. Alexander Cassian",
   subtitle: "For ages 18+",
-  icon: BookOpen,
-  iconColor: "text-orange-500",
   description: "Engage with Dr. Cassian, a distinguished professor who brings decades of research experience to sophisticated historical discourse.",
   prompt: `
 [CHARACTER PERSONALITY]
@@ -224,8 +214,6 @@ const brody: Character = {
   id: CharacterId.Brody,
   displayName: "Brody the Confused Surfer",
   subtitle: "For all ages (just for fun!)",
-  icon: Waves,
-  iconColor: "text-green-500",
   description: "Meet Brody, a well-meaning but hilariously incompetent history tutor who's always getting things mixed up and confused.",
   prompt: `
 [CHARACTER PERSONALITY]

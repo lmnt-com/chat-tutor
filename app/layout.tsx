@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { Lato } from "next/font/google";
 import "./globals.css";
-
-const lato = Lato({
-  subsets: ["latin"],
-  weight: ["100", "300", "400", "700", "900"],
-  preload: false,
-  display: "swap",
-});
+import { 
+  lato, 
+  comicNeue, 
+  cinzel,
+  lora,
+} from './fonts';
 
 export const metadata: Metadata = {
   title: "LMNT Tutor Demo",
@@ -22,7 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${lato.className} antialiased`}
+        className={`${lato.variable} ${comicNeue.variable} ${cinzel.variable} ${lora.variable} antialiased`}
+        style={{ fontFamily: 'var(--font-lato)' }}
       >
         {children}
       </body>

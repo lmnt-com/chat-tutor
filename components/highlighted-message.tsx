@@ -17,11 +17,13 @@ export function HighlightedMessage({
   currentlyPlayingSentenceId, 
   sentences,
   isCurrentMessage,
-  className = "" 
+  className = "",
 }: HighlightedMessageProps) {
+  const textSize = "text-base leading-relaxed"
+  
   // If no sentences or content or not the current message, render plain text
   if (sentences.length === 0 || !content || !isCurrentMessage) {
-    return <p className={cn("text-sm leading-relaxed", className)}>{content}</p>
+    return <p className={cn(textSize, className)}>{content}</p>
   }
 
   // Sentences are already sorted by start position from SentenceTracker
@@ -83,7 +85,7 @@ export function HighlightedMessage({
   }
 
   return (
-    <p className={cn("text-sm leading-relaxed", className)}>
+    <p className={cn(textSize, className)}>
       {renderParts()}
     </p>
   )

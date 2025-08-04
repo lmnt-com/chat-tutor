@@ -19,6 +19,7 @@ import { SettingsDialog } from "@/components/settings-dialog"
 import { CharacterId, getCharacter } from "@/lib/characters"
 import { SuggestedResponseBox } from "@/components/suggested-response-box"
 import { HighlightedMessage } from "@/components/highlighted-message"
+import { CharacterAvatar } from "@/components/character-avatar"
 import type { SentenceSpan } from "@/lib/types"
 
 export default function HistoryTutor() {
@@ -358,7 +359,6 @@ export default function HistoryTutor() {
     return <CharacterSelectionModal onSelect={handleCharacterSelect} />
   }
 
-
   return (
     <SidebarProvider defaultOpen={true} className="h-screen">
       <AppSidebar
@@ -382,7 +382,12 @@ export default function HistoryTutor() {
           <header className="flex items-center justify-between border-b px-6 py-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="md:hidden" />
-              <GraduationCap className="size-8 hidden md:block text-muted-foreground" />
+              {characterId && (
+                <div className="hidden md:block">
+                  <CharacterAvatar characterId={characterId} size="md" />
+                </div>
+              )}
+              {!characterId && <GraduationCap className="size-8 hidden md:block text-muted-foreground" />}
               <div className="flex flex-col">
                 <h1 className="text-2xl font-semibold text-foreground">
                   Time Travel Academy
@@ -407,13 +412,25 @@ export default function HistoryTutor() {
 
           <div className="flex-1 min-h-0">
             <ScrollArea className="h-full px-6">
-              <div className="space-y-4 py-6">
+              <div className="space-y-6 py-6">
                 {messages.map((message) => (
-                  <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}>
+                  <div key={message.id} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
+                    {message.role === "assistant" && characterId && (
+                      <div className="flex-shrink-0 mt-1">
+                        <CharacterAvatar characterId={characterId} size="sm" />
+                      </div>
+                    )}
                     <Card
-                      className={cn("max-w-[80%] p-2", message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-50")}
+                      className={cn(
+                        "max-w-[75%] transition-all duration-200",
+                        message.role === "user" 
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500/20" 
+                          : characterId 
+                            ? `chat-message character-${characterId} shadow-md`
+                            : "bg-gray-50"
+                      )}
                     >
-                      <CardContent className="px-2">
+                      <CardContent className="px-4">
                         {message.role === "assistant" ? (
                           <HighlightedMessage
                             content={message.content}
@@ -422,10 +439,17 @@ export default function HistoryTutor() {
                             sentences={currentMessageSentenceHighlights}
                           />
                         ) : (
-                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <p className="text-base leading-relaxed">{message.content}</p>
                         )}
                       </CardContent>
                     </Card>
+                    {message.role === "user" && (
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold shadow-md">
+                          U
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 

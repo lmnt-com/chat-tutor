@@ -40,9 +40,23 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   
-  /* Custom animations for suggested responses */
+  /* animations for suggested responses */
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
   --animate-fade-in-up-stagger: fade-in-up-stagger 0.4s ease-out forwards;
+  
+  /* character colors for Tailwind classes */
+  --color-character-fiona-primary: var(--character-fiona-primary);
+  --color-character-fiona-light: var(--character-fiona-light);
+  --color-character-fiona-border: var(--character-fiona-border);
+  --color-character-merlin-primary: var(--character-merlin-primary);
+  --color-character-merlin-light: var(--character-merlin-light);
+  --color-character-merlin-border: var(--character-merlin-border);
+  --color-character-cassian-primary: var(--character-cassian-primary);
+  --color-character-cassian-light: var(--character-cassian-light);
+  --color-character-cassian-border: var(--character-cassian-border);
+  --color-character-brody-primary: var(--character-brody-primary);
+  --color-character-brody-light: var(--character-brody-light);
+  --color-character-brody-border: var(--character-brody-border);
 }
 
 :root {
@@ -78,6 +92,20 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  
+  /* Character colors */
+  --character-fiona-primary: oklch(0.653 0.183 301.4);
+  --character-fiona-light: oklch(0.95 0.05 301.4);
+  --character-fiona-border: oklch(0.88 0.1 301.4);
+  --character-merlin-primary: oklch(0.54 0.25 285.5);
+  --character-merlin-light: oklch(0.96 0.03 285.5);
+  --character-merlin-border: oklch(0.8 0.15 285.5);
+  --character-cassian-primary: oklch(0.35 0.015 240);
+  --character-cassian-light: oklch(0.98 0.003 240);
+  --character-cassian-border: oklch(0.88 0.008 240);
+  --character-brody-primary: oklch(0.72 0.05 200);
+  --character-brody-light: oklch(0.94 0.02 200);
+  --character-brody-border: oklch(0.82 0.04 200);
 }
 
 .dark {
@@ -112,6 +140,20 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  
+  /* Character colors - dark mode */
+  --character-fiona-primary: oklch(0.73 0.18 301.4);
+  --character-fiona-light: oklch(0.25 0.08 301.4);
+  --character-fiona-border: oklch(0.4 0.12 301.4);
+  --character-merlin-primary: oklch(0.65 0.22 285.5);
+  --character-merlin-light: oklch(0.28 0.1 285.5);
+  --character-merlin-border: oklch(0.45 0.18 285.5);
+  --character-cassian-primary: oklch(0.75 0.02 240);
+  --character-cassian-light: oklch(0.18 0.008 240);
+  --character-cassian-border: oklch(0.45 0.015 240);
+  --character-brody-primary: oklch(0.75 0.04 200);
+  --character-brody-light: oklch(0.28 0.025 200);
+  --character-brody-border: oklch(0.5 0.035 200);
 }
 
 @layer base {
@@ -123,7 +165,6 @@
   }
 }
 
-/* Custom keyframes for suggested responses */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -146,7 +187,6 @@
   }
 }
 
-/* Utility classes for suggested responses */
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
 }
@@ -154,4 +194,90 @@
 .animate-fade-in-up-stagger {
   animation: fade-in-up-stagger 0.4s ease-out forwards;
   opacity: 0;
+}
+
+/* Character-specific themes */
+.theme-fiona .character-card:hover:not(.selected) {
+  box-shadow: 0 10px 15px -3px rgb(from var(--character-fiona-primary) r g b / 0.2), 
+              0 4px 6px -2px rgb(from var(--character-fiona-primary) r g b / 0.1);
+}
+
+.theme-merlin .character-card:hover:not(.selected) {
+  box-shadow: 0 10px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2), 
+              0 4px 6px -2px rgb(from var(--character-merlin-primary) r g b / 0.1);
+}
+
+.theme-cassian .character-card:hover:not(.selected) {
+  box-shadow: 0 10px 15px -3px rgb(from var(--character-cassian-primary) r g b / 0.2), 
+              0 4px 6px -2px rgb(from var(--character-cassian-primary) r g b / 0.1);
+}
+
+.theme-brody .character-card:hover:not(.selected) {
+  box-shadow: 0 10px 15px -3px rgb(from var(--character-brody-primary) r g b / 0.2), 
+              0 4px 6px -2px rgb(from var(--character-brody-primary) r g b / 0.1);
+}
+
+/* Character-specific chat styling */
+.chat-message.character-fiona {
+  background: linear-gradient(135deg, var(--character-fiona-light) 0%, color-mix(in oklch, var(--character-fiona-light) 50%, white) 100%);
+  border: 1px solid var(--character-fiona-border);
+  border-radius: 1.5rem 1.5rem 1.5rem 0.5rem;
+  position: relative;
+  box-shadow: 0 1px 3px 0 rgb(from var(--character-fiona-primary) r g b / 0.08), 
+              0 1px 2px 0 rgb(from var(--character-fiona-primary) r g b / 0.04);
+  font-family: var(--font-comic-neue), sans-serif, system-ui;
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.chat-message.character-merlin {
+  background: linear-gradient(135deg, var(--character-merlin-light) 0%, color-mix(in oklch, var(--character-merlin-light) 50%, white) 100%);
+  border: 1px solid var(--character-merlin-border);
+  border-radius: 0.875rem;
+  position: relative;
+  box-shadow: 0 8px 20px -5px rgb(from var(--character-merlin-primary) r g b / 0.25), 
+              0 4px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2),
+              0 2px 8px -2px rgb(from var(--character-merlin-primary) r g b / 0.15);
+  font-family: var(--font-cinzel), serif, system-ui;
+}
+
+.chat-message.character-merlin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgb(from var(--character-merlin-primary) r g b / 0.03) 0%, rgb(from var(--character-merlin-primary) r g b / 0.02) 100%);
+  border-radius: 0.875rem;
+  pointer-events: none;
+}
+
+.chat-message.character-cassian {
+  background: linear-gradient(135deg, var(--character-cassian-light) 0%, color-mix(in oklch, var(--character-cassian-light) 50%, white) 100%);
+  border: 1px solid var(--character-cassian-border);
+  border-radius: 0.75rem;
+  position: relative;
+  box-shadow: 0 1px 3px 0 rgb(from var(--character-cassian-primary) r g b / 0.08), 
+              0 1px 2px 0 rgb(from var(--character-cassian-primary) r g b / 0.04);
+  font-family: var(--font-lora), 'Times New Roman', serif, system-ui;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--foreground);
+}
+
+.chat-message.character-cassian::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgb(from var(--character-cassian-primary) r g b / 0.02) 0%, rgb(from var(--character-cassian-primary) r g b / 0.01) 100%);
+  border-radius: 0.75rem;
+  pointer-events: none;
+}
+
+.chat-message.character-brody {
+  background: linear-gradient(135deg, var(--character-brody-light) 0%, color-mix(in oklch, var(--character-brody-light) 50%, white) 100%);
+  border: 1px solid var(--character-brody-border);
+  border-radius: 1.25rem 1.25rem 1.25rem 0.5rem;
+  position: relative;
+  box-shadow: 0 1px 3px 0 rgb(from var(--character-brody-primary) r g b / 0.08), 
+              0 1px 2px 0 rgb(from var(--character-brody-primary) r g b / 0.04);
 }

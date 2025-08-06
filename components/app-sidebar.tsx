@@ -1,7 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { MessageSquare, Plus, Settings, User, Trash2, Users } from "lucide-react"
+import { useState } from "react";
+import {
+  MessageSquare,
+  Plus,
+  Settings,
+  User,
+  Trash2,
+  Users,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,29 +21,29 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { AuthDialog } from "@/components/auth-dialog"
-import { createClient, isSupabaseAvailable } from "@/lib/supabase"
-import { cn } from "@/lib/utils"
-import { CharacterId, getCharacter } from "@/lib/characters"
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AuthDialog } from "@/components/auth-dialog";
+import { createClient, isSupabaseAvailable } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+import { CharacterId, getCharacter } from "@/lib/characters";
 
 interface ChatThread {
-  id: string
-  title: string
-  created_at: string
-  updated_at: string
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AppSidebarProps {
-  user: { id: string; email?: string } | null
-  chatThreads: ChatThread[]
-  onThreadSelect: (threadId: string) => void
-  currentThreadId: string | null
-  onThreadDelete?: (threadId: string) => void
-  onCharacterSettingsClick: () => void
-  currentCharacter?: CharacterId | null
+  user: { id: string; email?: string } | null;
+  chatThreads: ChatThread[];
+  onThreadSelect: (threadId: string) => void;
+  currentThreadId: string | null;
+  onThreadDelete?: (threadId: string) => void;
+  onCharacterSettingsClick: () => void;
+  currentCharacter?: CharacterId | null;
 }
 
 export function AppSidebar({
@@ -46,65 +53,73 @@ export function AppSidebar({
   currentThreadId,
   onThreadDelete,
   onCharacterSettingsClick,
-  currentCharacter
+  currentCharacter,
 }: AppSidebarProps) {
-  const [showAuthDialog, setShowAuthDialog] = useState(false)
-  const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null)
-  const supabase = createClient()
-  const { state } = useSidebar()
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
+  const supabase = createClient();
+  const { state } = useSidebar();
 
   const handleSignOut = async () => {
     if (isSupabaseAvailable() && supabase) {
-      await supabase.auth.signOut()
+      await supabase.auth.signOut();
     }
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const startNewChat = () => {
-    onThreadSelect("")
-  }
+    onThreadSelect("");
+  };
 
   const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent thread selection when clicking delete
+    e.stopPropagation(); // Prevent thread selection when clicking delete
 
-    if (!confirm("Are you sure you want to delete this chat thread? This action cannot be undone.")) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to delete this chat thread? This action cannot be undone.",
+      )
+    ) {
+      return;
     }
 
-    setDeletingThreadId(threadId)
+    setDeletingThreadId(threadId);
 
     try {
       const response = await fetch(`/api/chat-threads/${threadId}`, {
-        method: 'DELETE',
-      })
+        method: "DELETE",
+      });
 
       if (response.ok) {
         // Call the parent callback to update the UI
         if (onThreadDelete) {
-          onThreadDelete(threadId)
+          onThreadDelete(threadId);
         }
 
         // If we're currently viewing the deleted thread, start a new chat
         if (currentThreadId === threadId) {
-          onThreadSelect("")
+          onThreadSelect("");
         }
       } else {
-        console.error("Failed to delete chat thread")
-        alert("Failed to delete chat thread. Please try again.")
+        console.error("Failed to delete chat thread");
+        alert("Failed to delete chat thread. Please try again.");
       }
     } catch (error) {
-      console.error("Error deleting chat thread:", error)
-      alert("Error deleting chat thread. Please try again.")
+      console.error("Error deleting chat thread:", error);
+      alert("Error deleting chat thread. Please try again.");
     } finally {
-      setDeletingThreadId(null)
+      setDeletingThreadId(null);
     }
-  }
+  };
 
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
         {state === "expanded" ? (
-          <Button onClick={startNewChat} className="w-full justify-start bg-transparent" variant="outline">
+          <Button
+            onClick={startNewChat}
+            className="w-full justify-start bg-transparent"
+            variant="outline"
+          >
             <Plus className="size-4 mr-2" />
             New Chat
           </Button>
@@ -129,7 +144,7 @@ export function AppSidebar({
                           onClick={() => onThreadSelect(thread.id)}
                           className={cn(
                             "w-46 justify-start",
-                            currentThreadId === thread.id && "bg-accent"
+                            currentThreadId === thread.id && "bg-accent",
                           )}
                           tooltip={thread.title}
                         >
@@ -159,9 +174,14 @@ export function AppSidebar({
         <SidebarMenu>
           {currentCharacter && (
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={onCharacterSettingsClick} tooltip="Change Character">
+              <SidebarMenuButton
+                onClick={onCharacterSettingsClick}
+                tooltip="Change Character"
+              >
                 <Users className="size-4" />
-                <span className="truncate">{getCharacter(currentCharacter).displayName}</span>
+                <span className="truncate">
+                  {getCharacter(currentCharacter).displayName}
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
@@ -194,5 +214,5 @@ export function AppSidebar({
       </SidebarFooter>
       <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </Sidebar>
-  )
+  );
 }

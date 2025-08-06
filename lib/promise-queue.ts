@@ -3,32 +3,32 @@
  * Useful for handling concurrent operations that need to be processed in order.
  */
 export class PromiseQueue<T> {
-  private queue: Promise<T>[] = []
-  private isProcessing = false
-  private isComplete = false
+  private queue: Promise<T>[] = [];
+  private isProcessing = false;
+  private isComplete = false;
 
   /**
    * Add a promise to the queue
    */
   add(promise: Promise<T>): void {
     if (this.isComplete) {
-      throw new Error('Cannot add to completed queue')
+      throw new Error("Cannot add to completed queue");
     }
-    this.queue.push(promise)
+    this.queue.push(promise);
   }
 
   /**
    * Mark the queue as complete (no more items will be added)
    */
   markComplete(): void {
-    this.isComplete = true
+    this.isComplete = true;
   }
 
   /**
    * Check if the queue is complete and empty
    */
   isFinished(): boolean {
-    return this.isComplete && this.queue.length === 0
+    return this.isComplete && this.queue.length === 0;
   }
 
   /**
@@ -38,39 +38,43 @@ export class PromiseQueue<T> {
    */
   async process(
     processor: (result: T) => void | Promise<void>,
-    errorHandler?: (error: Error, index: number) => void | Promise<void>
+    errorHandler?: (error: Error, index: number) => void | Promise<void>,
   ): Promise<void> {
     if (this.isProcessing) {
-      throw new Error('PromiseQueue is already processing')
+      throw new Error("PromiseQueue is already processing");
     }
-    
-    this.isProcessing = true
-    let processedCount = 0
+
+    this.isProcessing = true;
+    let processedCount = 0;
 
     try {
       while (processedCount < this.queue.length || !this.isComplete) {
         if (processedCount < this.queue.length) {
-          const currentIndex = processedCount
+          const currentIndex = processedCount;
           try {
-            const result = await this.queue[currentIndex]
-            await processor(result)
+            const result = await this.queue[currentIndex];
+            await processor(result);
           } catch (error) {
-            const errorObj = error instanceof Error ? error : new Error(String(error))
-            console.error(`Error processing promise at index ${currentIndex}:`, errorObj)
-            
+            const errorObj =
+              error instanceof Error ? error : new Error(String(error));
+            console.error(
+              `Error processing promise at index ${currentIndex}:`,
+              errorObj,
+            );
+
             if (errorHandler) {
-              await errorHandler(errorObj, currentIndex)
+              await errorHandler(errorObj, currentIndex);
             }
           }
-          processedCount++
+          processedCount++;
         } else {
           // Wait a bit before checking for new promises
           // Note: In production, you might use events instead of polling
-          await new Promise(resolve => setTimeout(resolve, 10))
+          await new Promise((resolve) => setTimeout(resolve, 10));
         }
       }
     } finally {
-      this.isProcessing = false
+      this.isProcessing = false;
     }
   }
 
@@ -78,7 +82,7 @@ export class PromiseQueue<T> {
    * Get the current queue length
    */
   get length(): number {
-    return this.queue.length
+    return this.queue.length;
   }
 
   /**
@@ -86,9 +90,9 @@ export class PromiseQueue<T> {
    */
   clear(): void {
     if (this.isProcessing) {
-      throw new Error('Cannot clear queue while processing')
+      throw new Error("Cannot clear queue while processing");
     }
-    this.queue = []
-    this.isComplete = false
+    this.queue = [];
+    this.isComplete = false;
   }
 }

@@ -14,13 +14,14 @@ This is a [Next.js](https://nextjs.org) project that demonstrates an interactive
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm, yarn, pnpm, or bun
 
 ### Installation
 
 1. Clone the repository
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -30,8 +31,9 @@ npm install
 #### Option 1: Basic Mode
 
 In this mode:
+
 - ✅ Chat functionality works normally
-- ✅ Text-to-speech works normally  
+- ✅ Text-to-speech works normally
 - ❌ User authentication is disabled
 - ❌ Chat history is not saved
 - ❌ Thread management is disabled
@@ -41,12 +43,14 @@ In this mode:
 ```bash
 touch .env.local
 ```
+
 ```env
 LMNT_API_KEY=your_lmnt_api_key
 OPENAI_API_KEY=your_openai_api_key
 ```
 
 2. Run:
+
 ```bash
 npm run dev
 ```
@@ -70,19 +74,20 @@ LMNT_API_KEY=your_lmnt_api_key
 
 3. Run the SQL script in `scripts/create-tables.sql` in your Supabase SQL editor to create the necessary tables
 4. Start the development server:
+
 ```bash
 npm run dev
 ```
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `LMNT_API_KEY` | Yes | Your LMNT API key for text-to-speech |
-| `OPENAI_API_KEY` | Yes | Your OpenAI API key for chat completions |
-| `NEXT_PUBLIC_SUPABASE_URL` | No | Supabase project URL (enables auth & history) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Supabase anonymous key (enables auth & history) |
-| `SUPABASE_SERVICE_ROLE_KEY` | No | Supabase service role key (enables auth & history) |
+| Variable                        | Required | Description                                        |
+| ------------------------------- | -------- | -------------------------------------------------- |
+| `LMNT_API_KEY`                  | Yes      | Your LMNT API key for text-to-speech               |
+| `OPENAI_API_KEY`                | Yes      | Your OpenAI API key for chat completions           |
+| `NEXT_PUBLIC_SUPABASE_URL`      | No       | Supabase project URL (enables auth & history)      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No       | Supabase anonymous key (enables auth & history)    |
+| `SUPABASE_SERVICE_ROLE_KEY`     | No       | Supabase service role key (enables auth & history) |
 
 ## Usage
 

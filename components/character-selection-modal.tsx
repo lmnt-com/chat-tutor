@@ -1,20 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { CharacterId } from "@/lib/characters"
-import { CharacterTypeSelector } from "@/components/character-selector"
+import { useState } from "react";
+import { CharacterId } from "@/lib/characters";
+import { CharacterTypeSelector } from "@/components/character-selector";
 
 interface CharacterSelectionModalProps {
-  onSelect: (character: CharacterId) => void
+  onSelect: (character: CharacterId) => void;
 }
 
-export function CharacterSelectionModal({ onSelect }: CharacterSelectionModalProps) {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterId | null>(null)
+export function CharacterSelectionModal({
+  onSelect,
+}: CharacterSelectionModalProps) {
+  const [selectedCharacter, setSelectedCharacter] =
+    useState<CharacterId | null>(null);
 
   const handleCharacterSelect = (character: CharacterId) => {
-    setSelectedCharacter(character)
-    onSelect(character)
-  }
+    setSelectedCharacter(character);
+    onSelect(character);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -31,7 +34,9 @@ export function CharacterSelectionModal({ onSelect }: CharacterSelectionModalPro
             </div>
           </div>
           <p className="text-lg text-gray-700 max-w-2xl mx-auto">
-            Select your guide for an unforgettable journey through time. Each character brings their unique style and expertise to make history come alive!
+            Select your guide for an unforgettable journey through time. Each
+            character brings their unique style and expertise to make history
+            come alive!
           </p>
         </div>
 
@@ -50,5 +55,5 @@ export function CharacterSelectionModal({ onSelect }: CharacterSelectionModalPro
         </div>
       </div>
     </div>
-  )
+  );
 }

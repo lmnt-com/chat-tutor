@@ -1,21 +1,27 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-import { Separator } from "@/components/ui/separator"
-import { CharacterId } from "@/lib/characters"
-import { CharacterTypeSelector } from "@/components/character-selector"
+import { Separator } from "@/components/ui/separator";
+import { CharacterId } from "@/lib/characters";
+import { CharacterTypeSelector } from "@/components/character-selector";
 
 interface SettingsDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  currentCharacter: CharacterId
-  onCharacterSelect: (character: CharacterId) => void
-  imageGenerationEnabled: boolean
-  onImageGenerationToggle: (enabled: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentCharacter: CharacterId;
+  onCharacterSelect: (character: CharacterId) => void;
+  imageGenerationEnabled: boolean;
+  onImageGenerationToggle: (enabled: boolean) => void;
 }
 
 export function SettingsDialog({
@@ -24,15 +30,16 @@ export function SettingsDialog({
   currentCharacter,
   onCharacterSelect,
   imageGenerationEnabled,
-  onImageGenerationToggle
+  onImageGenerationToggle,
 }: SettingsDialogProps) {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterId>(currentCharacter)
+  const [selectedCharacter, setSelectedCharacter] =
+    useState<CharacterId>(currentCharacter);
 
   useEffect(() => {
     if (selectedCharacter !== currentCharacter) {
-      onCharacterSelect(selectedCharacter)
+      onCharacterSelect(selectedCharacter);
     }
-  }, [selectedCharacter, currentCharacter, onCharacterSelect])
+  }, [selectedCharacter, currentCharacter, onCharacterSelect]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,7 +50,7 @@ export function SettingsDialog({
             Customize your learning experience by adjusting your preferences.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold mb-4">Choose your guide</h3>
@@ -53,9 +60,9 @@ export function SettingsDialog({
               variant="compact"
             />
           </div>
-          
+
           <Separator />
-          
+
           <div>
             <h3 className="text-lg font-semibold mb-4">Preferences</h3>
             <div className="space-y-4">
@@ -74,9 +81,9 @@ export function SettingsDialog({
               </div>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
               You can change your guide and preferences at any time.
@@ -85,5 +92,5 @@ export function SettingsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

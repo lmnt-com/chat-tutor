@@ -1,80 +1,86 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createClient, isSupabaseAvailable } from "@/lib/supabase"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClient, isSupabaseAvailable } from "@/lib/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AuthDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!isSupabaseAvailable() || !supabase) {
-      setError("Authentication is not available. Supabase is not configured.")
-      return
+      setError("Authentication is not available. Supabase is not configured.");
+      return;
     }
 
-    setLoading(true)
-    setError("")
-    setMessage("")
+    setLoading(true);
+    setError("");
+    setMessage("");
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-    })
+    });
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      setMessage("Check your email for the confirmation link!")
+      setMessage("Check your email for the confirmation link!");
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!isSupabaseAvailable() || !supabase) {
-      setError("Authentication is not available. Supabase is not configured.")
-      return
+      setError("Authentication is not available. Supabase is not configured.");
+      return;
     }
 
-    setLoading(true)
-    setError("")
-    setMessage("")
+    setLoading(true);
+    setError("");
+    setMessage("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      onOpenChange(false)
-      window.location.reload()
+      onOpenChange(false);
+      window.location.reload();
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   if (!isSupabaseAvailable()) {
     return (
@@ -88,18 +94,18 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </DialogHeader>
           <Alert>
             <AlertDescription>
-              To enable authentication, please configure the following environment variables:
+              To enable authentication, please configure the following
+              environment variables:
               <br />
               • NEXT_PUBLIC_SUPABASE_URL
               <br />
               • NEXT_PUBLIC_SUPABASE_ANON_KEY
-              <br />
-              • SUPABASE_SERVICE_ROLE_KEY
+              <br />• SUPABASE_SERVICE_ROLE_KEY
             </AlertDescription>
           </Alert>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -188,5 +194,5 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

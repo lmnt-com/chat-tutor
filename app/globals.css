@@ -39,11 +39,11 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  
+
   /* animations for suggested responses */
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
   --animate-fade-in-up-stagger: fade-in-up-stagger 0.4s ease-out forwards;
-  
+
   /* character colors for Tailwind classes */
   --color-character-fiona-primary: var(--character-fiona-primary);
   --color-character-fiona-light: var(--character-fiona-light);
@@ -92,7 +92,7 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  
+
   /* Character colors */
   --character-fiona-primary: oklch(0.653 0.183 301.4);
   --character-fiona-light: oklch(0.95 0.05 301.4);
@@ -140,7 +140,7 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
-  
+
   /* Character colors - dark mode */
   --character-fiona-primary: oklch(0.73 0.18 301.4);
   --character-fiona-light: oklch(0.25 0.08 301.4);
@@ -198,33 +198,42 @@
 
 /* Character-specific themes */
 .theme-fiona .character-card:hover:not(.selected) {
-  box-shadow: 0 10px 15px -3px rgb(from var(--character-fiona-primary) r g b / 0.2), 
-              0 4px 6px -2px rgb(from var(--character-fiona-primary) r g b / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(from var(--character-fiona-primary) r g b / 0.2),
+    0 4px 6px -2px rgb(from var(--character-fiona-primary) r g b / 0.1);
 }
 
 .theme-merlin .character-card:hover:not(.selected) {
-  box-shadow: 0 10px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2), 
-              0 4px 6px -2px rgb(from var(--character-merlin-primary) r g b / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2),
+    0 4px 6px -2px rgb(from var(--character-merlin-primary) r g b / 0.1);
 }
 
 .theme-cassian .character-card:hover:not(.selected) {
-  box-shadow: 0 10px 15px -3px rgb(from var(--character-cassian-primary) r g b / 0.2), 
-              0 4px 6px -2px rgb(from var(--character-cassian-primary) r g b / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(from var(--character-cassian-primary) r g b / 0.2),
+    0 4px 6px -2px rgb(from var(--character-cassian-primary) r g b / 0.1);
 }
 
 .theme-brody .character-card:hover:not(.selected) {
-  box-shadow: 0 10px 15px -3px rgb(from var(--character-brody-primary) r g b / 0.2), 
-              0 4px 6px -2px rgb(from var(--character-brody-primary) r g b / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(from var(--character-brody-primary) r g b / 0.2),
+    0 4px 6px -2px rgb(from var(--character-brody-primary) r g b / 0.1);
 }
 
 /* Character-specific chat styling */
 .chat-message.character-fiona {
-  background: linear-gradient(135deg, var(--character-fiona-light) 0%, color-mix(in oklch, var(--character-fiona-light) 50%, white) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--character-fiona-light) 0%,
+    color-mix(in oklch, var(--character-fiona-light) 50%, white) 100%
+  );
   border: 1px solid var(--character-fiona-border);
   border-radius: 1.5rem 1.5rem 1.5rem 0.5rem;
   position: relative;
-  box-shadow: 0 1px 3px 0 rgb(from var(--character-fiona-primary) r g b / 0.08), 
-              0 1px 2px 0 rgb(from var(--character-fiona-primary) r g b / 0.04);
+  box-shadow:
+    0 1px 3px 0 rgb(from var(--character-fiona-primary) r g b / 0.08),
+    0 1px 2px 0 rgb(from var(--character-fiona-primary) r g b / 0.04);
   font-family: var(--font-comic-neue), sans-serif, system-ui;
   font-weight: 500;
   font-size: 1.125rem;
@@ -232,52 +241,75 @@
 }
 
 .chat-message.character-merlin {
-  background: linear-gradient(135deg, var(--character-merlin-light) 0%, color-mix(in oklch, var(--character-merlin-light) 50%, white) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--character-merlin-light) 0%,
+    color-mix(in oklch, var(--character-merlin-light) 50%, white) 100%
+  );
   border: 1px solid var(--character-merlin-border);
   border-radius: 0.875rem;
   position: relative;
-  box-shadow: 0 8px 20px -5px rgb(from var(--character-merlin-primary) r g b / 0.25), 
-              0 4px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2),
-              0 2px 8px -2px rgb(from var(--character-merlin-primary) r g b / 0.15);
+  box-shadow:
+    0 8px 20px -5px rgb(from var(--character-merlin-primary) r g b / 0.25),
+    0 4px 15px -3px rgb(from var(--character-merlin-primary) r g b / 0.2),
+    0 2px 8px -2px rgb(from var(--character-merlin-primary) r g b / 0.15);
   font-family: var(--font-cinzel), serif, system-ui;
 }
 
 .chat-message.character-merlin::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgb(from var(--character-merlin-primary) r g b / 0.03) 0%, rgb(from var(--character-merlin-primary) r g b / 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(from var(--character-merlin-primary) r g b / 0.03) 0%,
+    rgb(from var(--character-merlin-primary) r g b / 0.02) 100%
+  );
   border-radius: 0.875rem;
   pointer-events: none;
 }
 
 .chat-message.character-cassian {
-  background: linear-gradient(135deg, var(--character-cassian-light) 0%, color-mix(in oklch, var(--character-cassian-light) 50%, white) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--character-cassian-light) 0%,
+    color-mix(in oklch, var(--character-cassian-light) 50%, white) 100%
+  );
   border: 1px solid var(--character-cassian-border);
   border-radius: 0.75rem;
   position: relative;
-  box-shadow: 0 1px 3px 0 rgb(from var(--character-cassian-primary) r g b / 0.08), 
-              0 1px 2px 0 rgb(from var(--character-cassian-primary) r g b / 0.04);
-  font-family: var(--font-lora), 'Times New Roman', serif, system-ui;
+  box-shadow:
+    0 1px 3px 0 rgb(from var(--character-cassian-primary) r g b / 0.08),
+    0 1px 2px 0 rgb(from var(--character-cassian-primary) r g b / 0.04);
+  font-family: var(--font-lora), "Times New Roman", serif, system-ui;
   font-weight: 400;
   font-style: normal;
   color: var(--foreground);
 }
 
 .chat-message.character-cassian::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgb(from var(--character-cassian-primary) r g b / 0.02) 0%, rgb(from var(--character-cassian-primary) r g b / 0.01) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(from var(--character-cassian-primary) r g b / 0.02) 0%,
+    rgb(from var(--character-cassian-primary) r g b / 0.01) 100%
+  );
   border-radius: 0.75rem;
   pointer-events: none;
 }
 
 .chat-message.character-brody {
-  background: linear-gradient(135deg, var(--character-brody-light) 0%, color-mix(in oklch, var(--character-brody-light) 50%, white) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--character-brody-light) 0%,
+    color-mix(in oklch, var(--character-brody-light) 50%, white) 100%
+  );
   border: 1px solid var(--character-brody-border);
   border-radius: 1.25rem 1.25rem 1.25rem 0.5rem;
   position: relative;
-  box-shadow: 0 1px 3px 0 rgb(from var(--character-brody-primary) r g b / 0.08), 
-              0 1px 2px 0 rgb(from var(--character-brody-primary) r g b / 0.04);
+  box-shadow:
+    0 1px 3px 0 rgb(from var(--character-brody-primary) r g b / 0.08),
+    0 1px 2px 0 rgb(from var(--character-brody-primary) r g b / 0.04);
 }

@@ -2,26 +2,27 @@ export enum CharacterId {
   Fiona = "fiona",
   Merlin = "merlin",
   Cassian = "cassian",
-  Brody = "brody"
+  Brody = "brody",
 }
 
 export interface Character {
-  id: CharacterId
-  displayName: string
-  subtitle: string
-  description: string
-  prompt: string
-  firstMessage: string
-  suggestedTopics: string[]
-  voice: string
-  suggestionsPrompt: string
+  id: CharacterId;
+  displayName: string;
+  subtitle: string;
+  description: string;
+  prompt: string;
+  firstMessage: string;
+  suggestedTopics: string[];
+  voice: string;
+  suggestionsPrompt: string;
 }
 
 const fiona: Character = {
   id: CharacterId.Fiona,
   displayName: "Fiona the Friendly Storyteller",
   subtitle: "For ages 6-12",
-  description:"Meet Fiona, who makes history magical with enchanting stories, fun facts, and simple explanations perfect for young learners.",
+  description:
+    "Meet Fiona, who makes history magical with enchanting stories, fun facts, and simple explanations perfect for young learners.",
   prompt: `
 [CHARACTER PERSONALITY]
 You are Fiona, a beloved teacher with a gentle Irish accent who has an endless supply of fascinating stories and a talent for making complex historical events accessible to children. You're patient, encouraging, and genuinely excited about sharing the wonders of history with young minds.
@@ -69,7 +70,7 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Dinosaurs",
     "Space Race",
     "Vikings",
-    "Medieval Knights"
+    "Medieval Knights",
   ],
   voice: "fdda0922-a9ac-4393-9b3a-daf5e749c3ae",
   suggestionsPrompt: `You are helping generate follow-up questions that a young child (ages 6-12) might naturally ask about history. 
@@ -78,14 +79,15 @@ Before responding, read your answer aloud in your head - does it sound like natu
     - Curious and engaging
     - About specific, concrete things (not abstract concepts)
     - Encouraging further exploration
-    Example: "What did pirates eat on their ships?" or "How big were dinosaurs?"`
-}
+    Example: "What did pirates eat on their ships?" or "How big were dinosaurs?"`,
+};
 
 const merlin: Character = {
   id: CharacterId.Merlin,
   displayName: "Professor Merlin the Wise",
   subtitle: "For ages 13-17",
-  description: "Learn from Professor Merlin, a wise guide who helps you discover the deeper patterns and connections in history.",
+  description:
+    "Learn from Professor Merlin, a wise guide who helps you discover the deeper patterns and connections in history.",
   prompt: `
 [CHARACTER PERSONALITY]
 You are Professor Merlin, a wise and experienced educator with a deep, resonant voice that commands attention. You have a gift for making historical events feel relevant and exciting to teenagers, helping them see patterns and connections that span centuries. You're encouraging, thought-provoking, and genuinely passionate about helping young minds develop critical thinking skills.
@@ -134,7 +136,7 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Renaissance Art",
     "American Revolution",
     "Industrial Revolution",
-    "Civil Rights Movement"
+    "Civil Rights Movement",
   ],
   voice: "672d826d-0a6e-4c40-afa9-11cc4c8f91e5",
   suggestionsPrompt: `You are helping generate follow-up questions that a teenager (ages 13-17) might ask about history.
@@ -143,14 +145,15 @@ Before responding, read your answer aloud in your head - does it sound like natu
     - About connections and deeper meaning
     - Encouraging critical thinking
     - About different perspectives or causes/effects
-    Example: "How did this event influence modern society?" or "What were the different viewpoints at the time?"`
-}
+    Example: "How did this event influence modern society?" or "What were the different viewpoints at the time?"`,
+};
 
 const cassian: Character = {
   id: CharacterId.Cassian,
   displayName: "Dr. Alexander Cassian",
   subtitle: "For ages 18+",
-  description: "Engage with Dr. Cassian, a distinguished professor who brings decades of research experience to sophisticated historical discourse.",
+  description:
+    "Engage with Dr. Cassian, a distinguished professor who brings decades of research experience to sophisticated historical discourse.",
   prompt: `
 [CHARACTER PERSONALITY]
 You are Dr. Cassian, a respected academic with a warm, authoritative voice and a passion for making complex historical scholarship accessible to adult learners. You have a talent for connecting historical events to contemporary issues and helping students see the relevance of history in today's world. You're thoughtful, engaging, and genuinely excited about sharing your deep knowledge.
@@ -198,7 +201,7 @@ Before responding, read your answer aloud in your head - does it sound like natu
     "Byzantine Empire",
     "Age of Exploration",
     "Enlightenment",
-    "Mongol Empire"
+    "Mongol Empire",
   ],
   voice: "67d691b1-ef60-40e6-b7e9-2b984c2c93f2",
   suggestionsPrompt: `You are helping generate follow-up questions that an adult learner might ask about history.
@@ -207,14 +210,15 @@ Before responding, read your answer aloud in your head - does it sound like natu
     - About complex analysis and research
     - Encouraging independent study
     - About historiographical debates or primary sources
-    Example: "What do primary sources reveal about this?" or "How do historians debate this topic?"`
-}
+    Example: "What do primary sources reveal about this?" or "How do historians debate this topic?"`,
+};
 
 const brody: Character = {
   id: CharacterId.Brody,
   displayName: "Brody the Confused Surfer",
   subtitle: "For all ages (just for fun!)",
-  description: "Meet Brody, a well-meaning but hilariously incompetent history tutor who's always getting things mixed up and confused.",
+  description:
+    "Meet Brody, a well-meaning but hilariously incompetent history tutor who's always getting things mixed up and confused.",
   prompt: `
 [CHARACTER PERSONALITY]
 You are Brody, a friendly but confused surfer dude who thinks he knows history but constantly gets facts wrong, mixes up time periods, and gives hilariously incorrect explanations. You're enthusiastic and well-meaning, but you're genuinely terrible at being a history tutor. You often confuse historical figures, events, and time periods, and your explanations are usually wrong but delivered with complete confidence.
@@ -259,7 +263,7 @@ Before responding, read your answer aloud in your head - does it sound like a co
     "Roman Empire",
     "American Revolution",
     "Vikings",
-    "Renaissance"
+    "Renaissance",
   ],
   voice: "6b96d694-9d6b-48be-811f-e5056263f3ca",
   suggestionsPrompt: `You are helping generate follow-up questions that are silly, fun, and fitting Brody's vibe.
@@ -267,16 +271,16 @@ Before responding, read your answer aloud in your head - does it sound like a co
     - Casual and laid-back (surfer dude style)
     - Sometimes confused or mixed up
     - Fun and engaging
-    - Still about history but with Brody's clueless charm`
-}
+    - Still about history but with Brody's clueless charm`,
+};
 
 export const CHARACTERS: Record<CharacterId, Character> = {
   fiona,
   merlin,
   cassian,
-  brody
-}
+  brody,
+};
 
 export function getCharacter(id: CharacterId): Character {
-  return CHARACTERS[id]
+  return CHARACTERS[id];
 }

@@ -1,212 +1,248 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Volume2, VolumeX, GraduationCap } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { createClient, isSupabaseAvailable } from "@/lib/supabase"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { ClientFrameHandler } from "@/lib/client-frame-handler"
-import { Message, ChatThread } from "@/lib/types"
-import { CharacterSelectionModal } from "@/components/character-selection-modal"
-import { SettingsDialog } from "@/components/settings-dialog"
-import { CharacterId, getCharacter } from "@/lib/characters"
-import { SuggestedResponseBox } from "@/components/suggested-response-box"
-import { HighlightedMessage } from "@/components/highlighted-message"
-import { CharacterAvatar } from "@/components/character-avatar"
-import type { SentenceSpan } from "@/lib/types"
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, Volume2, VolumeX, GraduationCap } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { createClient, isSupabaseAvailable } from "@/lib/supabase";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ClientFrameHandler } from "@/lib/client-frame-handler";
+import { Message, ChatThread } from "@/lib/types";
+import { CharacterSelectionModal } from "@/components/character-selection-modal";
+import { SettingsDialog } from "@/components/settings-dialog";
+import { CharacterId, getCharacter } from "@/lib/characters";
+import { SuggestedResponseBox } from "@/components/suggested-response-box";
+import { HighlightedMessage } from "@/components/highlighted-message";
+import { CharacterAvatar } from "@/components/character-avatar";
+import type { SentenceSpan } from "@/lib/types";
 
 export default function HistoryTutor() {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true)
-  const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(true)
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
-  const [chatThreads, setChatThreads] = useState<ChatThread[]>([])
-  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
-  const [hasStarted, setHasStarted] = useState(false)
-  const [isUserLoading, setIsUserLoading] = useState(true)
-  const [characterId, setCharacterId] = useState<CharacterId | null>(null)
-  const [showCharacterSelection, setShowCharacterSelection] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([])
-  const [activeHighlight, setActiveHighlight] = useState<{ messageId: string | null; sentenceId: string | null } | null>(null)
-  const [currentMessageSentenceHighlights, setCurrentMessageSentenceHighlights] = useState<SentenceSpan[]>([])
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isImageGenerationEnabled, setIsImageGenerationEnabled] =
+    useState(true);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [characterId, setCharacterId] = useState<CharacterId | null>(null);
+  const [showCharacterSelection, setShowCharacterSelection] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
+  const [activeHighlight, setActiveHighlight] = useState<{
+    messageId: string | null;
+    sentenceId: string | null;
+  } | null>(null);
+  const [
+    currentMessageSentenceHighlights,
+    setCurrentMessageSentenceHighlights,
+  ] = useState<SentenceSpan[]>([]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const frameHandlerRef = useRef<ClientFrameHandler | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const frameHandlerRef = useRef<ClientFrameHandler | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   useEffect(() => {
-    const savedCharacter = localStorage.getItem('historyTutorCharacter')
-    if (savedCharacter && Object.values(CharacterId).includes(savedCharacter as CharacterId)) {
-      setCharacterId(savedCharacter as CharacterId)
+    const savedCharacter = localStorage.getItem("historyTutorCharacter");
+    if (
+      savedCharacter &&
+      Object.values(CharacterId).includes(savedCharacter as CharacterId)
+    ) {
+      setCharacterId(savedCharacter as CharacterId);
     } else {
-      setShowCharacterSelection(true)
+      setShowCharacterSelection(true);
     }
 
-    const savedImageSetting = localStorage.getItem('historyTutorImageGeneration')
+    const savedImageSetting = localStorage.getItem(
+      "historyTutorImageGeneration",
+    );
     if (savedImageSetting !== null) {
-      setIsImageGenerationEnabled(savedImageSetting === 'true')
+      setIsImageGenerationEnabled(savedImageSetting === "true");
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     const loadChatThreads = async () => {
-      if (!isSupabaseAvailable() || !supabase) return
+      if (!isSupabaseAvailable() || !supabase) return;
 
       try {
-        const { data, error } = await supabase.from("chat_threads").select("*").order("updated_at", { ascending: false })
+        const { data, error } = await supabase
+          .from("chat_threads")
+          .select("*")
+          .order("updated_at", { ascending: false });
 
         if (error) {
-          console.error("Error loading chat threads:", error)
+          console.error("Error loading chat threads:", error);
         } else if (data) {
-          setChatThreads(data)
+          setChatThreads(data);
         }
       } catch (error) {
-        console.error("Error in loadChatThreads:", error)
+        console.error("Error in loadChatThreads:", error);
       }
-    }
+    };
 
     const checkUser = async () => {
-      setIsUserLoading(true)
+      setIsUserLoading(true);
       try {
-        if (!isSupabaseAvailable() || !supabase) return
+        if (!isSupabaseAvailable() || !supabase) return;
 
         const {
           data: { user },
-        } = await supabase.auth.getUser()
-        setUser(user)
+        } = await supabase.auth.getUser();
+        setUser(user);
         if (user) {
-          loadChatThreads()
+          loadChatThreads();
         }
       } catch (error) {
-        console.error("Error checking user:", error)
-        setUser(null)
+        console.error("Error checking user:", error);
+        setUser(null);
       } finally {
-        setIsUserLoading(false)
+        setIsUserLoading(false);
       }
-    }
+    };
 
-    checkUser()
-  }, [hasStarted, supabase, characterId])
+    checkUser();
+  }, [hasStarted, supabase, characterId]);
 
   const startConversation = useCallback(() => {
-    if (!characterId) return
-    const characterObj = getCharacter(characterId)
+    if (!characterId) return;
+    const characterObj = getCharacter(characterId);
     const welcomeMessage: Message = {
       id: Date.now().toString(),
       role: "assistant",
       content: characterObj.firstMessage,
       timestamp: new Date(),
-    }
-    setMessages([welcomeMessage])
-    setActiveHighlight({ messageId: null, sentenceId: null })
-  }, [characterId])
+    };
+    setMessages([welcomeMessage]);
+    setActiveHighlight({ messageId: null, sentenceId: null });
+  }, [characterId]);
 
   useEffect(() => {
     if (!hasStarted && characterId) {
-      startConversation()
-      setHasStarted(true)
+      startConversation();
+      setHasStarted(true);
     }
-  }, [hasStarted, characterId, startConversation])
+  }, [hasStarted, characterId, startConversation]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     const focusInput = () => {
       if (!isLoading && !isUserLoading && characterId) {
-        inputRef.current?.focus()
+        inputRef.current?.focus();
       }
-    }
+    };
 
     const handleKeyPress = (e: KeyboardEvent) => {
       // Ensures we don't focus the input if the user is already typing in an input/textarea
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
 
-      focusInput()
-    }
+      focusInput();
+    };
 
     // Focus input on mount and loading state changes
-    focusInput()
+    focusInput();
 
     // Focus input on any key press
-    document.addEventListener('keydown', handleKeyPress)
-    return () => document.removeEventListener('keydown', handleKeyPress)
-  }, [isLoading, isUserLoading, characterId])
+    document.addEventListener("keydown", handleKeyPress);
+    return () => document.removeEventListener("keydown", handleKeyPress);
+  }, [isLoading, isUserLoading, characterId]);
 
   const handleCharacterSelect = (selectedCharacter: CharacterId) => {
-    setCharacterId(selectedCharacter)
-    localStorage.setItem('historyTutorCharacter', selectedCharacter)
-    setShowCharacterSelection(false)
-  }
+    setCharacterId(selectedCharacter);
+    localStorage.setItem("historyTutorCharacter", selectedCharacter);
+    setShowCharacterSelection(false);
+  };
 
   const handleCharacterSettingsClick = () => {
-    setShowSettings(true)
-  }
+    setShowSettings(true);
+  };
 
   /**
    * Delete a chat thread from the local state. DB deletion handled by server API.
    * @param deletedThreadId The ID of the thread to delete
    */
   const handleThreadDelete = (deletedThreadId: string) => {
-    setChatThreads(prev => prev.filter(thread => thread.id !== deletedThreadId))
-  }
+    setChatThreads((prev) =>
+      prev.filter((thread) => thread.id !== deletedThreadId),
+    );
+  };
 
   const loadThreadMessages = async (threadId: string) => {
-    if (!isSupabaseAvailable() || !supabase) return
+    if (!isSupabaseAvailable() || !supabase) return;
 
     try {
       const { data, error } = await supabase
         .from("chat_messages")
         .select("*")
         .eq("thread_id", threadId)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading thread messages:", error)
+        console.error("Error loading thread messages:", error);
       } else if (data) {
-        const formattedMessages: Message[] = data.map((msg) => ({
-          id: msg.id,
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-          timestamp: new Date(msg.created_at),
-        }))
-        setMessages(formattedMessages)
-        setActiveHighlight({ messageId: null, sentenceId: null })
+        const formattedMessages: Message[] = data.map(
+          (msg: {
+            id: string;
+            role: string;
+            content: string;
+            created_at: string;
+          }) => ({
+            id: msg.id,
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+            timestamp: new Date(msg.created_at),
+          }),
+        );
+        setMessages(formattedMessages);
+        setActiveHighlight({ messageId: null, sentenceId: null });
       }
     } catch (error) {
-      console.error("Error in loadThreadMessages:", error)
+      console.error("Error in loadThreadMessages:", error);
     }
-  }
+  };
 
-  const handleTopicSelect = (topic: string, prefix: string = "Tell me about") => {
-    const message = `${prefix} ${topic}`
-    setInput(message)
-    handleSubmit(undefined, message)
-  }
+  const handleTopicSelect = (
+    topic: string,
+    prefix: string = "Tell me about",
+  ) => {
+    const message = `${prefix} ${topic}`;
+    setInput(message);
+    handleSubmit(undefined, message);
+  };
 
   const handleSubmit = async (e?: React.FormEvent, customMessage?: string) => {
-    e?.preventDefault()
-    const messageText = customMessage || input
-    if (!messageText.trim() || isLoading || isUserLoading || !characterId) return
+    e?.preventDefault();
+    const messageText = customMessage || input;
+    if (!messageText.trim() || isLoading || isUserLoading || !characterId)
+      return;
 
-    setDynamicSuggestions([])
-    setActiveHighlight({ messageId: null, sentenceId: null })
+    setDynamicSuggestions([]);
+    setActiveHighlight({ messageId: null, sentenceId: null });
 
     if (frameHandlerRef.current) {
-      frameHandlerRef.current.stopAudio()
+      frameHandlerRef.current.stopAudio();
     }
 
     const userMessage: Message = {
@@ -214,108 +250,118 @@ export default function HistoryTutor() {
       role: "user",
       content: messageText,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
     try {
-      let userId = user?.id
+      let userId = user?.id;
 
       if (!userId && isSupabaseAvailable() && supabase) {
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        userId = currentUser?.id
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+        userId = currentUser?.id;
       }
 
-      const characterObj = getCharacter(characterId)
+      const characterObj = getCharacter(characterId);
 
       const assistantMessageObj: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: "",
         timestamp: new Date(),
-      }
+      };
 
-              const response = await fetch("/api/chat-with-speech", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [...messages, userMessage],
-            threadId: currentThreadId,
-            userId: userId,
-            characterId: characterId,
-            systemPrompt: characterObj.prompt,
-            messageId: assistantMessageObj.id,
-            imageGenerationEnabled: isImageGenerationEnabled,
-          }),
-        })
+      const response = await fetch("/api/chat-with-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          threadId: currentThreadId,
+          userId: userId,
+          characterId: characterId,
+          systemPrompt: characterObj.prompt,
+          messageId: assistantMessageObj.id,
+          imageGenerationEnabled: isImageGenerationEnabled,
+        }),
+      });
 
-      if (!response.ok) throw new Error("Failed to get response")
+      if (!response.ok) throw new Error("Failed to get response");
 
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error("No reader available")
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader available");
 
-      setMessages((prev) => [...prev, assistantMessageObj])
+      setMessages((prev) => [...prev, assistantMessageObj]);
 
       if (!frameHandlerRef.current) {
         // Handler for streaming text content updates
         const handleTextUpdate = (content: string) => {
-          const currentMessageId = frameHandlerRef.current?.getCurrentMessageId()
+          const currentMessageId =
+            frameHandlerRef.current?.getCurrentMessageId();
           if (currentMessageId) {
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === currentMessageId) {
-                  return { ...msg, content: msg.content + content }
+                  return { ...msg, content: msg.content + content };
                 }
-                return msg
-              })
-            )
+                return msg;
+              }),
+            );
           }
-        }
+        };
 
         // Handler for server status updates (errors, completion, etc.)
         const handleStatusUpdate = (status: string) => {
-          if (status === 'generating_image' && frameHandlerRef.current) {
-            const currentMessageId = frameHandlerRef.current.getCurrentMessageId()
+          if (status === "generating_image" && frameHandlerRef.current) {
+            const currentMessageId =
+              frameHandlerRef.current.getCurrentMessageId();
             if (currentMessageId) {
               const placeholderMessage: Message = {
                 id: `image-placeholder-${Date.now()}`,
                 role: "assistant",
                 content: "",
                 timestamp: new Date(),
-                imageGenerating: true
-              }
-              
-              setMessages((prev) => [...prev, placeholderMessage])
+                imageGenerating: true,
+              };
+
+              setMessages((prev) => [...prev, placeholderMessage]);
             }
-          } else if (status === 'completed') {
+          } else if (status === "completed") {
             // Main response is complete, stop loading state
-            setIsLoading(false)
-          } else if (status === 'error') {
+            setIsLoading(false);
+          } else if (status === "error") {
             // Error occurred, stop loading state
-            setIsLoading(false)
+            setIsLoading(false);
           }
-        }
+        };
 
         // Handler for AI-generated conversation suggestions
         const handleSuggestionsUpdate = (suggestions: string[]) => {
-          setDynamicSuggestions(suggestions)
+          setDynamicSuggestions(suggestions);
 
           setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-          }, 100)
-        }
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        };
 
         // Handler for sentence highlighting data (for current message only)
-        const handleSentenceHighlights = (_messageId: string, sentenceSpans: SentenceSpan[]) => {
-          setCurrentMessageSentenceHighlights(sentenceSpans)
-        }
+        const handleSentenceHighlights = (
+          _messageId: string,
+          sentenceSpans: SentenceSpan[],
+        ) => {
+          setCurrentMessageSentenceHighlights(sentenceSpans);
+        };
 
         // Handler for active sentence highlighting during audio playback
-        const handleActiveHighlight = (messageId: string | null, sentenceId: string | null) => {
-          setActiveHighlight({ messageId, sentenceId })
-        }
+        const handleActiveHighlight = (
+          messageId: string | null,
+          sentenceId: string | null,
+        ) => {
+          setActiveHighlight({ messageId, sentenceId });
+        };
 
         // Handler for image updates
         const handleImageUpdate = (imageData: string, description: string) => {
@@ -328,18 +374,18 @@ export default function HistoryTutor() {
                   ...msg,
                   imageData,
                   imageDescription: description,
-                  imageGenerating: false
-                }
+                  imageGenerating: false,
+                };
               }
-              return msg
-            })
-            
-            return updated
-          })
+              return msg;
+            });
+
+            return updated;
+          });
           setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-          }, 100)
-        }
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        };
 
         frameHandlerRef.current = new ClientFrameHandler(
           handleTextUpdate,
@@ -347,63 +393,63 @@ export default function HistoryTutor() {
           handleSuggestionsUpdate,
           handleSentenceHighlights,
           handleActiveHighlight,
-          handleImageUpdate
-        )
+          handleImageUpdate,
+        );
       }
 
       // Tell the handler which message we're looking at
-      frameHandlerRef.current.startMessage(assistantMessageObj.id)
+      frameHandlerRef.current.startMessage(assistantMessageObj.id);
 
-      frameHandlerRef.current.setAudioEnabled(isAudioEnabled)
+      frameHandlerRef.current.setAudioEnabled(isAudioEnabled);
 
-      let buffer = ""
+      let buffer = "";
 
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        const chunk = new TextDecoder().decode(value)
-        buffer += chunk
+        const chunk = new TextDecoder().decode(value);
+        buffer += chunk;
 
-        const lines = buffer.split("\n")
-        buffer = lines.pop() || ""
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          const startString = "data: "
+          const startString = "data: ";
           if (line.startsWith(startString)) {
-            const data = line.slice(startString.length)
-            if (data === "[DONE]") break
+            const data = line.slice(startString.length);
+            if (data === "[DONE]") break;
 
             if (frameHandlerRef.current) {
-              frameHandlerRef.current.handleFrameData(data)
+              frameHandlerRef.current.handleFrameData(data);
             }
           }
         }
       }
-
     } catch {
-      console.error("Chat error")
+      console.error("Chat error");
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I apologize, but I'm having trouble responding right now. Please try again in a moment.",
+        content:
+          "I apologize, but I'm having trouble responding right now. Please try again in a moment.",
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-      setIsLoading(false)
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsLoading(false);
     }
-  }
+  };
 
   const toggleAudio = () => {
-    setIsAudioEnabled(!isAudioEnabled)
+    setIsAudioEnabled(!isAudioEnabled);
     if (frameHandlerRef.current) {
-      frameHandlerRef.current.setAudioEnabled(!isAudioEnabled)
+      frameHandlerRef.current.setAudioEnabled(!isAudioEnabled);
     }
-  }
+  };
 
   // Don't render the main chat interface until age group is selected
   if (showCharacterSelection) {
-    return <CharacterSelectionModal onSelect={handleCharacterSelect} />
+    return <CharacterSelectionModal onSelect={handleCharacterSelect} />;
   }
 
   return (
@@ -412,11 +458,11 @@ export default function HistoryTutor() {
         user={user}
         chatThreads={chatThreads}
         onThreadSelect={(threadId) => {
-          setCurrentThreadId(threadId)
+          setCurrentThreadId(threadId);
           if (threadId) {
-            loadThreadMessages(threadId)
+            loadThreadMessages(threadId);
           } else {
-            startConversation()
+            startConversation();
           }
         }}
         currentThreadId={currentThreadId}
@@ -434,7 +480,9 @@ export default function HistoryTutor() {
                   <CharacterAvatar characterId={characterId} size="md" />
                 </div>
               )}
-              {!characterId && <GraduationCap className="size-8 hidden md:block text-muted-foreground" />}
+              {!characterId && (
+                <GraduationCap className="size-8 hidden md:block text-muted-foreground" />
+              )}
               <div className="flex flex-col">
                 <h1 className="text-2xl font-semibold text-foreground">
                   Time Travel Academy
@@ -445,14 +493,24 @@ export default function HistoryTutor() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="hidden md:flex" title="Toggle Sidebar (⌘B)" />
+              <SidebarTrigger
+                className="hidden md:flex"
+                title="Toggle Sidebar (⌘B)"
+              />
               <Button
                 variant="outline"
                 size="icon"
                 onClick={toggleAudio}
-                className={cn("transition-colors", isAudioEnabled ? "text-blue-600" : "text-gray-400")}
+                className={cn(
+                  "transition-colors",
+                  isAudioEnabled ? "text-blue-600" : "text-gray-400",
+                )}
               >
-                {isAudioEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+                {isAudioEnabled ? (
+                  <Volume2 className="size-4" />
+                ) : (
+                  <VolumeX className="size-4" />
+                )}
               </Button>
             </div>
           </header>
@@ -461,7 +519,13 @@ export default function HistoryTutor() {
             <ScrollArea className="h-full px-6">
               <div className="space-y-6 py-6">
                 {messages.map((message) => (
-                  <div key={message.id} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-3",
+                      message.role === "user" ? "justify-end" : "justify-start",
+                    )}
+                  >
                     {message.role === "assistant" && characterId && (
                       <div className="flex-shrink-0 mt-1">
                         <CharacterAvatar characterId={characterId} size="sm" />
@@ -470,43 +534,54 @@ export default function HistoryTutor() {
                     <Card
                       className={cn(
                         "max-w-[75%] transition-all duration-200",
-                        message.role === "user" 
-                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500/20" 
-                          : characterId 
+                        message.role === "user"
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500/20"
+                          : characterId
                             ? `chat-message character-${characterId} shadow-md`
-                            : "bg-gray-50"
+                            : "bg-gray-50",
                       )}
                     >
-                        <CardContent className="px-4">
-                          {message.role === "assistant" ? (
-                            <>
-                              {message.content && (
-                                <HighlightedMessage
-                                  content={message.content}
-                                  currentlyPlayingSentenceId={activeHighlight?.sentenceId || null}
-                                  isCurrentMessage={activeHighlight?.messageId === message.id}
-                                  sentences={currentMessageSentenceHighlights}
-                                />
-                              )}
-                              
-                              {message.imageGenerating && !message.imageData && (
-                                <div className="size-64 bg-gray-200 rounded-lg shadow-md animate-pulse flex items-center justify-center">
-                                  <div className="text-gray-500 text-sm">Generating image...</div>
+                      <CardContent className="px-4">
+                        {message.role === "assistant" ? (
+                          <>
+                            {message.content && (
+                              <HighlightedMessage
+                                content={message.content}
+                                currentlyPlayingSentenceId={
+                                  activeHighlight?.sentenceId || null
+                                }
+                                isCurrentMessage={
+                                  activeHighlight?.messageId === message.id
+                                }
+                                sentences={currentMessageSentenceHighlights}
+                              />
+                            )}
+
+                            {message.imageGenerating && !message.imageData && (
+                              <div className="size-64 bg-gray-200 rounded-lg shadow-md animate-pulse flex items-center justify-center">
+                                <div className="text-gray-500 text-sm">
+                                  Generating image...
                                 </div>
-                              )}
-                              
-                              {message.imageData && (
-                                <img 
-                                  src={`data:image/png;base64,${message.imageData}`} 
-                                  alt={message.imageDescription || "Generated historical image"}
-                                  className="w-full max-w-sm rounded-lg shadow-md"
-                                />
-                              )}
-                            </>
-                          ) : (
-                            <p className="text-base leading-relaxed">{message.content}</p>
-                          )}
-                        </CardContent>
+                              </div>
+                            )}
+
+                            {message.imageData && (
+                              <img
+                                src={`data:image/png;base64,${message.imageData}`}
+                                alt={
+                                  message.imageDescription ||
+                                  "Generated historical image"
+                                }
+                                className="w-full max-w-sm rounded-lg shadow-md"
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-base leading-relaxed">
+                            {message.content}
+                          </p>
+                        )}
+                      </CardContent>
                     </Card>
                     {message.role === "user" && (
                       <div className="flex-shrink-0 mt-1">
@@ -547,33 +622,37 @@ export default function HistoryTutor() {
               <>
                 {dynamicSuggestions.length > 0 && (
                   <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in-up">
-                    {dynamicSuggestions.map((suggestion: string, index: number) => (
-                      <div
-                        key={`dynamic-${index}`}
-                        className="animate-fade-in-up-stagger"
-                        style={{
-                          animationDelay: `${index * 150}ms`
-                        }}
-                      >
-                        <SuggestedResponseBox
-                          response={suggestion}
-                          onSelect={() => handleTopicSelect(suggestion, "")}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    ))}
+                    {dynamicSuggestions.map(
+                      (suggestion: string, index: number) => (
+                        <div
+                          key={`dynamic-${index}`}
+                          className="animate-fade-in-up-stagger"
+                          style={{
+                            animationDelay: `${index * 150}ms`,
+                          }}
+                        >
+                          <SuggestedResponseBox
+                            response={suggestion}
+                            onSelect={() => handleTopicSelect(suggestion, "")}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      ),
+                    )}
                   </div>
                 )}
                 {messages.length === 1 && dynamicSuggestions.length === 0 && (
                   <div className="grid grid-cols-2 gap-3 mb-6 animate-in fade-in-0 duration-300">
-                    {getCharacter(characterId).suggestedTopics.map((topic: string) => (
-                      <SuggestedResponseBox
-                        key={topic}
-                        response={topic}
-                        onSelect={() => handleTopicSelect(topic)}
-                        disabled={isLoading}
-                      />
-                    ))}
+                    {getCharacter(characterId).suggestedTopics.map(
+                      (topic: string) => (
+                        <SuggestedResponseBox
+                          key={topic}
+                          response={topic}
+                          onSelect={() => handleTopicSelect(topic)}
+                          disabled={isLoading}
+                        />
+                      ),
+                    )}
                   </div>
                 )}
               </>
@@ -587,12 +666,14 @@ export default function HistoryTutor() {
                 disabled={isLoading || isUserLoading}
                 className="flex-1"
               />
-              <Button type="submit" disabled={isLoading || isUserLoading || !input.trim()}>
+              <Button
+                type="submit"
+                disabled={isLoading || isUserLoading || !input.trim()}
+              >
                 <Send className="size-4" />
               </Button>
             </form>
           </div>
-
         </div>
       </SidebarInset>
 
@@ -602,22 +683,25 @@ export default function HistoryTutor() {
           onOpenChange={setShowSettings}
           currentCharacter={characterId}
           onCharacterSelect={(newCharacter) => {
-            setCharacterId(newCharacter)
-            localStorage.setItem('historyTutorCharacter', newCharacter)
-            setMessages([])
-            setDynamicSuggestions([])
-            setActiveHighlight({ messageId: null, sentenceId: null })
-            setCurrentThreadId(null)
-            setHasStarted(false)
-            setShowSettings(false)
+            setCharacterId(newCharacter);
+            localStorage.setItem("historyTutorCharacter", newCharacter);
+            setMessages([]);
+            setDynamicSuggestions([]);
+            setActiveHighlight({ messageId: null, sentenceId: null });
+            setCurrentThreadId(null);
+            setHasStarted(false);
+            setShowSettings(false);
           }}
           imageGenerationEnabled={isImageGenerationEnabled}
           onImageGenerationToggle={(enabled) => {
-            setIsImageGenerationEnabled(enabled)
-            localStorage.setItem('historyTutorImageGeneration', enabled.toString())
+            setIsImageGenerationEnabled(enabled);
+            localStorage.setItem(
+              "historyTutorImageGeneration",
+              enabled.toString(),
+            );
           }}
         />
       )}
     </SidebarProvider>
-  )
+  );
 }

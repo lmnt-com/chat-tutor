@@ -1,6 +1,6 @@
 # LMNT History Tutor Demo
 
-This is a [Next.js](https://nextjs.org) project that demonstrates an interactive history tutoring experience with speech provided by [LMNT](https://lmnt.com). Fork this repo to use it as a starting point for your own project!
+This is the source code for the [LMNT History Tutor](https://history-tutor.vercel.app/) Next.js project with speech provided by [LMNT](https://lmnt.com). Fork this repo to use it as a starting point for your own project!
 
 ## Features
 

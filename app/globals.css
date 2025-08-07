@@ -61,37 +61,38 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Parchment & Ink Theme */
+  --background: oklch(0.98 0.01 85); /* Cream parchment */
+  --foreground: oklch(0.15 0.05 45); /* Deep brown ink */
+  --card: oklch(0.99 0.005 85); /* Slightly lighter parchment */
+  --card-foreground: oklch(0.15 0.05 45);
+  --popover: oklch(0.99 0.005 85);
+  --popover-foreground: oklch(0.15 0.05 45);
+  --primary: oklch(0.25 0.08 45); /* Rich brown */
+  --primary-foreground: oklch(0.98 0.01 85);
+  --secondary: oklch(0.95 0.02 85); /* Light parchment */
+  --secondary-foreground: oklch(0.25 0.08 45);
+  --muted: oklch(0.95 0.02 85);
+  --muted-foreground: oklch(0.45 0.04 45); /* Medium brown */
+  --accent: oklch(0.92 0.03 85); /* Warmer parchment */
+  --accent-foreground: oklch(0.25 0.08 45);
+  --destructive: oklch(0.65 0.15 25); /* Reddish brown */
+  --border: oklch(0.88 0.02 85); /* Parchment border*/
+  --input: oklch(0.99 0.005 85);
+  --ring: oklch(0.25 0.08 45);
+  --chart-1: oklch(0.65 0.15 45); /* Brown */
+  --chart-2: oklch(0.7 0.12 85); /* Gold */
+  --chart-3: oklch(0.6 0.1 65); /* Sepia */
+  --chart-4: oklch(0.75 0.08 25); /* Dark brown */
+  --chart-5: oklch(0.8 0.06 45); /* Light brown */
+  --sidebar: oklch(0.96 0.015 85); /* Sidebar parchment */
+  --sidebar-foreground: oklch(0.15 0.05 45);
+  --sidebar-primary: oklch(0.25 0.08 45);
+  --sidebar-primary-foreground: oklch(0.98 0.01 85);
+  --sidebar-accent: oklch(0.92 0.03 85);
+  --sidebar-accent-foreground: oklch(0.25 0.08 45);
+  --sidebar-border: oklch(0.88 0.02 85);
+  --sidebar-ring: oklch(0.25 0.08 45);
 
   /* Character colors */
   --character-fiona-primary: oklch(0.653 0.183 301.4);
@@ -312,4 +313,42 @@
   box-shadow:
     0 1px 3px 0 rgb(from var(--character-brody-primary) r g b / 0.08),
     0 1px 2px 0 rgb(from var(--character-brody-primary) r g b / 0.04);
+  font-family: var(--font-architects-daughter), cursive, system-ui;
+  font-weight: 400;
+}
+
+/* Input styling for parchment theme */
+input[data-slot="input"],
+input[type="text"],
+input[type="search"] {
+  border-color: var(--border) !important;
+  background-color: var(--background) !important;
+}
+
+input[data-slot="input"]:focus,
+input[type="text"]:focus,
+input[type="search"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgb(from var(--primary) r g b / 0.1) !important;
+}
+
+/* Switch styling for parchment theme */
+[data-slot="switch"] {
+  border-color: var(--border) !important;
+  background-color: var(--muted) !important;
+}
+
+[data-slot="switch"][data-state="checked"] {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+[data-slot="switch"][data-state="unchecked"] {
+  background-color: var(--muted) !important;
+  border-color: var(--border) !important;
+}
+
+[data-slot="switch-thumb"] {
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
 }

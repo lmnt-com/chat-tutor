@@ -7,7 +7,6 @@ export interface Message {
   timestamp: Date;
   imageData?: string;
   imageDescription?: string;
-  createdAt?: string;
   imageGenerating?: boolean; // track if image generation is in progress
 }
 

@@ -1,6 +1,6 @@
 # LMNT History Tutor Demo
 
-This is the source code for the [LMNT History Tutor](https://history-tutor.vercel.app/) Next.js project with speech provided by [LMNT](https://lmnt.com). Fork this repo to use it as a starting point for your own project!
+This is the source code for the [LMNT History Tutor](https://lmnt-chat-tutor.vercel.app/) Next.js project with speech provided by [LMNT](https://lmnt.com). Fork this repo to use it as a starting point for your own project!
 
 ## Features
 

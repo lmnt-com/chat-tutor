@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { lato, comicNeue, cinzel, lora } from "./fonts";
+import {
+  crimsonText,
+  comicNeue,
+  cinzel,
+  lora,
+  medievalSharp,
+  architectsDaughter,
+  lato,
+} from "./fonts";
 
 export const metadata: Metadata = {
   title: "LMNT Tutor Demo",
@@ -15,8 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${lato.variable} ${comicNeue.variable} ${cinzel.variable} ${lora.variable} antialiased`}
-        style={{ fontFamily: "var(--font-lato)" }}
+        className={`${crimsonText.variable} ${comicNeue.variable} ${cinzel.variable} ${lora.variable} ${medievalSharp.variable} ${architectsDaughter.variable} ${lato.variable} antialiased`}
+        style={{ fontFamily: "var(--font-crimson-text)" }}
       >
         {children}
       </body>

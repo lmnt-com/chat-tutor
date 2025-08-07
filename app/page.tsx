@@ -130,6 +130,7 @@ export default function HistoryTutor() {
     };
     setMessages([welcomeMessage]);
     setActiveHighlight({ messageId: null, sentenceId: null });
+    setDynamicSuggestions([]);
   }, [characterId]);
 
   useEffect(() => {
@@ -484,10 +485,16 @@ export default function HistoryTutor() {
                 <GraduationCap className="size-8 hidden md:block text-muted-foreground" />
               )}
               <div className="flex flex-col">
-                <h1 className="text-2xl font-semibold text-foreground">
+                <h1
+                  className="text-2xl font-semibold text-foreground"
+                  style={{ fontFamily: "var(--font-medieval-sharp)" }}
+                >
                   Time Travel Academy
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p
+                  className="text-sm text-muted-foreground"
+                  style={{ fontFamily: "var(--font-medieval-sharp)" }}
+                >
                   Your personal history tutor
                 </p>
               </div>
@@ -535,7 +542,7 @@ export default function HistoryTutor() {
                       className={cn(
                         "max-w-[75%] transition-all duration-200",
                         message.role === "user"
-                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500/20"
+                          ? "bg-gradient-to-br from-muted to-muted/80 text-muted-foreground shadow-sm border-border"
                           : characterId
                             ? `chat-message character-${characterId} shadow-md`
                             : "bg-gray-50",
@@ -577,7 +584,10 @@ export default function HistoryTutor() {
                             )}
                           </>
                         ) : (
-                          <p className="text-base leading-relaxed">
+                          <p
+                            className="text-base leading-relaxed"
+                            style={{ fontFamily: "var(--font-lato)" }}
+                          >
                             {message.content}
                           </p>
                         )}
@@ -585,7 +595,7 @@ export default function HistoryTutor() {
                     </Card>
                     {message.role === "user" && (
                       <div className="flex-shrink-0 mt-1">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold shadow-md">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-muted to-muted/90 flex items-center justify-center text-muted-foreground text-sm font-semibold shadow-sm border border-border">
                           U
                         </div>
                       </div>
@@ -665,6 +675,7 @@ export default function HistoryTutor() {
                 placeholder="Ask me anything about history..."
                 disabled={isLoading || isUserLoading}
                 className="flex-1"
+                style={{ fontFamily: "var(--font-lato)" }}
               />
               <Button
                 type="submit"

@@ -41,7 +41,7 @@ export function CharacterTypeSelector({
               className={cn(
                 "character-card cursor-pointer transition-all duration-300 h-full flex flex-col",
                 selectedCharacter === character.id
-                  ? "ring-2 ring-blue-500 ring-offset-2 selected cursor-default"
+                  ? "ring-2 ring-primary ring-offset-2 selected cursor-default"
                   : "hover:shadow-md",
               )}
               onClick={() => onCharacterSelect(character.id)}

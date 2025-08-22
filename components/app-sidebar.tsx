@@ -28,6 +28,7 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { createClient, isSupabaseAvailable } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { CharacterId, getCharacter } from "@/lib/characters";
+import { GithubCta } from "./github-cta";
 
 interface ChatThread {
   id: string;
@@ -203,7 +204,10 @@ export function AppSidebar({
           ) : (
             <>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setShowAuthDialog(true)}>
+                <SidebarMenuButton
+                  onClick={() => setShowAuthDialog(true)}
+                  tooltip="Sign In"
+                >
                   <User className="size-4" />
                   <span>Sign In</span>
                 </SidebarMenuButton>
@@ -211,6 +215,17 @@ export function AppSidebar({
             </>
           )}
         </SidebarMenu>
+        {state === "expanded" ? (
+          <GithubCta variant="default" />
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Fork on GitHub">
+                <GithubCta variant="icon" />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarFooter>
       <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </Sidebar>

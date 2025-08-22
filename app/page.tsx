@@ -25,6 +25,7 @@ import { SuggestedResponseBox } from "@/components/suggested-response-box";
 import { HighlightedMessage } from "@/components/highlighted-message";
 import { CharacterAvatar } from "@/components/character-avatar";
 import type { SentenceSpan } from "@/lib/types";
+import { GithubCta } from "@/components/github-cta";
 
 export default function HistoryTutor() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -511,6 +512,7 @@ export default function HistoryTutor() {
                 className={cn(
                   "transition-colors",
                   isAudioEnabled ? "text-blue-600" : "text-gray-400",
+                  "w-9",
                 )}
               >
                 {isAudioEnabled ? (
@@ -519,6 +521,7 @@ export default function HistoryTutor() {
                   <VolumeX className="size-4" />
                 )}
               </Button>
+              <GithubCta variant="icon" tooltipSide="bottom" />
             </div>
           </header>
 
